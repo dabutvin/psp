@@ -10,6 +10,20 @@ class FeedViewModel {
     var error: Error?
     var selectedCategory: Category = .all
     
+    // Filters
+    var filterHashtags: [String] = []
+    var filterSinceDate: Date? = nil
+    
+    var hasActiveFilters: Bool {
+        !filterHashtags.isEmpty || filterSinceDate != nil
+    }
+    
+    var activeFilterCount: Int {
+        var count = filterHashtags.count
+        if filterSinceDate != nil { count += 1 }
+        return count
+    }
+    
     private var nextCursor: String? = nil
     private let api = APIClient.shared
     
@@ -29,6 +43,8 @@ class FeedViewModel {
         do {
             let response = try await api.getPosts(
                 hashtag: selectedCategory.hashtag,
+                hashtags: filterHashtags.isEmpty ? nil : filterHashtags,
+                since: filterSinceDate,
                 limit: 20,
                 cursor: nil
             )
@@ -51,6 +67,8 @@ class FeedViewModel {
         do {
             let response = try await api.getPosts(
                 hashtag: selectedCategory.hashtag,
+                hashtags: filterHashtags.isEmpty ? nil : filterHashtags,
+                since: filterSinceDate,
                 limit: 20,
                 cursor: nextCursor
             )
@@ -68,6 +86,20 @@ class FeedViewModel {
     func changeCategory(_ category: Category) async {
         guard category != selectedCategory else { return }
         selectedCategory = category
+        posts = []
+        await refresh()
+    }
+    
+    func applyFilters(hashtags: Set<String>, sinceDate: Date?) async {
+        filterHashtags = Array(hashtags)
+        filterSinceDate = sinceDate
+        posts = []
+        await refresh()
+    }
+    
+    func clearFilters() async {
+        filterHashtags = []
+        filterSinceDate = nil
         posts = []
         await refresh()
     }

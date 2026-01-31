@@ -44,12 +44,48 @@ actor APIClient {
     
     func getPosts(
         hashtag: String? = nil,
+        hashtags: [String]? = nil,
         search: String? = nil,
+        since: Date? = nil,
         limit: Int = 20,
         cursor: String? = nil
     ) async throws -> PostsResponse {
         if useMockData {
-            return MockData.postsResponse
+            // Apply client-side filtering for mock data
+            var filtered = MockData.posts
+            
+            // Filter by category hashtag
+            if let hashtag = hashtag, !hashtag.isEmpty {
+                filtered = filtered.filter { post in
+                    post.hashtags.contains { $0.name.lowercased() == hashtag.lowercased() }
+                }
+            }
+            
+            // Filter by additional hashtags
+            if let hashtags = hashtags, !hashtags.isEmpty {
+                filtered = filtered.filter { post in
+                    let postHashtagNames = Set(post.hashtags.map { $0.name.lowercased() })
+                    let filterHashtags = Set(hashtags.map { $0.lowercased() })
+                    return !postHashtagNames.isDisjoint(with: filterHashtags)
+                }
+            }
+            
+            // Filter by date
+            if let since = since {
+                filtered = filtered.filter { $0.created >= since }
+            }
+            
+            // Filter by search
+            if let search = search, !search.isEmpty {
+                let query = search.lowercased()
+                filtered = filtered.filter { post in
+                    post.subject.lowercased().contains(query) ||
+                    post.body.lowercased().contains(query) ||
+                    post.senderName.lowercased().contains(query)
+                }
+            }
+            
+            return PostsResponse(messages: filtered, nextCursor: nil, hasMore: false)
         }
         
         var components = URLComponents(string: "\(baseURL)/messages")!
@@ -58,8 +94,15 @@ actor APIClient {
         if let hashtag = hashtag, !hashtag.isEmpty {
             queryItems.append(URLQueryItem(name: "hashtag", value: hashtag))
         }
+        if let hashtags = hashtags, !hashtags.isEmpty {
+            queryItems.append(URLQueryItem(name: "hashtags", value: hashtags.joined(separator: ",")))
+        }
         if let search = search, !search.isEmpty {
             queryItems.append(URLQueryItem(name: "search", value: search))
+        }
+        if let since = since {
+            let formatter = ISO8601DateFormatter()
+            queryItems.append(URLQueryItem(name: "since", value: formatter.string(from: since)))
         }
         queryItems.append(URLQueryItem(name: "limit", value: String(limit)))
         if let cursor = cursor {

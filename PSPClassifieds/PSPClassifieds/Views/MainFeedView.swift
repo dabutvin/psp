@@ -2,12 +2,26 @@ import SwiftUI
 
 struct MainFeedView: View {
     @State private var viewModel = FeedViewModel()
+    @State private var filterViewModel = FilterViewModel()
     @State private var showSearch = false
     @State private var showFilters = false
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Active Filters Banner
+                if viewModel.hasActiveFilters {
+                    ActiveFiltersBanner(
+                        filterCount: viewModel.activeFilterCount,
+                        onClear: {
+                            Task {
+                                filterViewModel.clearFilters()
+                                await viewModel.clearFilters()
+                            }
+                        }
+                    )
+                }
+                
                 // Category Tabs
                 CategoryTabBar(
                     selectedCategory: viewModel.selectedCategory,
@@ -29,7 +43,22 @@ struct MainFeedView: View {
                         Button {
                             showFilters = true
                         } label: {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: viewModel.hasActiveFilters 
+                                    ? "line.3.horizontal.decrease.circle.fill" 
+                                    : "line.3.horizontal.decrease.circle")
+                                
+                                if viewModel.activeFilterCount > 0 {
+                                    Text("\(viewModel.activeFilterCount)")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                        .padding(4)
+                                        .background(Color.red)
+                                        .clipShape(Circle())
+                                        .offset(x: 8, y: -8)
+                                }
+                            }
                         }
                         
                         Button {
@@ -41,7 +70,14 @@ struct MainFeedView: View {
                 }
             }
             .sheet(isPresented: $showFilters) {
-                FilterSheet()
+                FilterSheet(viewModel: filterViewModel) {
+                    Task {
+                        await viewModel.applyFilters(
+                            hashtags: filterViewModel.selectedHashtags,
+                            sinceDate: filterViewModel.dateRange.startDate
+                        )
+                    }
+                }
             }
             .sheet(isPresented: $showSearch) {
                 SearchView()
@@ -50,6 +86,33 @@ struct MainFeedView: View {
         .task {
             await viewModel.loadInitialPosts()
         }
+    }
+}
+
+// MARK: - Active Filters Banner
+struct ActiveFiltersBanner: View {
+    let filterCount: Int
+    let onClear: () -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.caption)
+            
+            Text("\(filterCount) filter\(filterCount == 1 ? "" : "s") active")
+                .font(.caption)
+                .fontWeight(.medium)
+            
+            Spacer()
+            
+            Button("Clear", action: onClear)
+                .font(.caption)
+                .fontWeight(.semibold)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.accentColor.opacity(0.1))
+        .foregroundStyle(Color.accentColor)
     }
 }
 
@@ -144,63 +207,6 @@ struct PostsList: View {
         }
         .navigationDestination(for: Post.self) { post in
             PostDetailView(post: post)
-        }
-    }
-}
-
-// MARK: - Placeholder Views
-struct FilterSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("Hashtags") {
-                    Text("Coming in Phase 2")
-                        .foregroundStyle(.secondary)
-                }
-                
-                Section("Price Range") {
-                    Text("Coming in Phase 2")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle("Filters")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
-}
-
-struct SearchView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var searchText = ""
-    
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("Recent Searches") {
-                    Text("Coming in Phase 2")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "Search posts...")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
         }
     }
 }
