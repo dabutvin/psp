@@ -199,3 +199,11 @@ server/
 | `GROUPS_IO_GROUP_ID` | Group ID for PSP Classifieds | 8407 |
 | `DATABASE_URL` | PostgreSQL connection string | Required |
 | `BACKFILL_DELAY_SECONDS` | Delay between backfill requests | 5 |
+
+TODOs:
+- set up the deployments through gha
+- set up PR checks to run tests and build docker image
+- check on the ever-growing DB, especially with the postgres search index, you are capped out at 500MB
+- alerting for the hourly fetcher job - get a text when it hasn't succeeded in too long
+- loading indivator when filtering on the hashtag click  and the api takes a second
+- cancel to close the search drawer - you have to swipe it down
