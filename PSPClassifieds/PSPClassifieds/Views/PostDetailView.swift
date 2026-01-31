@@ -29,8 +29,8 @@ struct PostDetailView: View {
                     // Body
                     if let body = post.body {
                         HTMLTextView(html: body)
-                    } else {
-                        Text(post.snippet)
+                    } else if let snippet = post.snippet {
+                        Text(snippet)
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
@@ -70,7 +70,7 @@ struct PostDetailView: View {
     
     private var titleAndPrice: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(post.subject)
+            Text(post.subject ?? "No Subject")
                 .font(.title2)
                 .fontWeight(.bold)
             
@@ -88,9 +88,11 @@ struct PostDetailView: View {
             Label(post.senderName ?? "Unknown Seller", systemImage: "person.circle")
                 .font(.subheadline)
             
-            Label(post.created.formatted(date: .long, time: .shortened), systemImage: "calendar")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if let created = post.created {
+                Label(created.formatted(date: .long, time: .shortened), systemImage: "calendar")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
@@ -209,7 +211,7 @@ struct ActionButtons: View {
     }
     
     private func sendEmail() {
-        let subject = "Re: \(post.subject)"
+        let subject = "Re: \(post.subject ?? "")"
         let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         
         if let url = URL(string: "mailto:?subject=\(encodedSubject)") {

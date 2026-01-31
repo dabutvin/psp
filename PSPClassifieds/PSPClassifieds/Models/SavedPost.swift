@@ -5,10 +5,10 @@ import SwiftData
 final class SavedPost {
     @Attribute(.unique) var postId: Int
     var topicId: Int?
-    var created: Date
-    var subject: String
+    var created: Date?
+    var subject: String?
     var body: String?
-    var snippet: String
+    var snippet: String?
     var senderName: String?
     var price: String?
     var savedAt: Date

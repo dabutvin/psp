@@ -3,10 +3,10 @@ import Foundation
 struct Post: Identifiable, Codable, Hashable {
     let id: Int
     let topicId: Int?
-    let created: Date
-    let subject: String
+    let created: Date?
+    let subject: String?
     let body: String?
-    let snippet: String
+    let snippet: String?
     let senderName: String?
     let hashtags: [Hashtag]
     let attachments: [Attachment]?
@@ -46,6 +46,7 @@ struct Post: Identifiable, Codable, Hashable {
     }
     
     var relativeTimeString: String {
+        guard let created = created else { return "" }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: created, relativeTo: Date())

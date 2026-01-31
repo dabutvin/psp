@@ -11,7 +11,7 @@ struct PostCardView: View {
             // Content
             VStack(alignment: .leading, spacing: 6) {
                 // Title
-                Text(post.subject)
+                Text(post.subject ?? "No Subject")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)

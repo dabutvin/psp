@@ -1,24 +1,27 @@
 import Foundation
 
 struct Attachment: Codable, Identifiable, Hashable {
-    let downloadUrl: String
+    let downloadUrl: String?
     let thumbnailUrl: String?
     let filename: String?
     let mediaType: String?
     let attachmentIndex: Int?
     
-    var id: String { downloadUrl }
+    var id: String { downloadUrl ?? UUID().uuidString }
     
     // Convenience accessors for backwards compatibility
-    var url: String { downloadUrl }
+    var url: String? { downloadUrl }
     
     var imageURL: URL? {
-        URL(string: downloadUrl)
+        guard let downloadUrl else { return nil }
+        return URL(string: downloadUrl)
     }
     
     var thumbnailImageURL: URL? {
-        guard let thumb = thumbnailUrl else { return imageURL }
-        return URL(string: thumb)
+        if let thumb = thumbnailUrl {
+            return URL(string: thumb)
+        }
+        return imageURL
     }
     
     enum CodingKeys: String, CodingKey {
