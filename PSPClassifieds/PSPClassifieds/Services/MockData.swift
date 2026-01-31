@@ -39,32 +39,56 @@ enum MockData {
                 Hashtag(name: "Toddler", colorHex: "#FFEB3B")
             ],
             attachments: [
-                Attachment(url: "https://placekittens.com/600/400", thumbnailUrl: "https://placekittens.com/200/200"),
-                Attachment(url: "https://placekittens.com/601/400", thumbnailUrl: "https://placekittens.com/201/200")
+                // Real PSP image URLs - requires authentication
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0/IMG_0739.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0?thumb=1"
+                ),
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1/IMG_0740.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1?thumb=1"
+                )
             ],
             price: "$40"
         ),
         Post(
             id: 2,
-            topicId: 1002,
+            topicId: 117553742,
             created: Date().addingTimeInterval(-7200),
-            subject: "FREE: Baby Bjorn Bouncer",
+            subject: "FS: Snoo Bassinet, Swaddles and Sheets - $500",
             body: """
-            <p>Moving and need this gone ASAP!</p>
-            <p>Baby Bjorn bouncer in good condition. Some wear on the fabric but fully functional. 
-            My kids loved this thing.</p>
-            <p>Pickup only - 7th Ave near 9th St.</p>
+            <p>Snoo is in excellent condition! We're the second owners and everything works perfectly. Comes with:</p>
+            <ul>
+                <li>5 sheets</li>
+                <li>11 swaddles that include sizes S, M, and L</li>
+                <li>4 Coterie wipe packs (if you'd like them!)</li>
+            </ul>
+            <p>We're a pet free and smoke free household and everything has been washed.</p>
+            <p>$500, pick up is in Prospect Heights.</p>
+            <p>Thanks!<br/>Caroline, mom to James (4 months)</p>
             """,
-            snippet: "Moving and need this gone ASAP! Baby Bjorn bouncer in good condition...",
-            senderName: "Michael Torres",
+            snippet: "Snoo is in excellent condition! We're the second owners and everything works perfectly...",
+            senderName: "Caroline Appling",
             hashtags: [
-                Hashtag(name: "ForFree", colorHex: "#2196F3"),
-                Hashtag(name: "BabyGear", colorHex: "#00BCD4")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
+                Hashtag(name: "ProspectHeights", colorHex: "#93ad59"),
+                Hashtag(name: "BabyGear", colorHex: "#8ec2ee")
             ],
             attachments: [
-                Attachment(url: "https://placekittens.com/602/400", thumbnailUrl: "https://placekittens.com/202/200")
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0/IMG_1286.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0?thumb=1"
+                ),
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1/IMG_1296.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1?thumb=1"
+                ),
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2/IMG_1299.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2?thumb=1"
+                )
             ],
-            price: nil
+            price: "$500"
         ),
         Post(
             id: 3,
@@ -87,25 +111,32 @@ enum MockData {
         ),
         Post(
             id: 4,
-            topicId: 1004,
+            topicId: 117553741,
             created: Date().addingTimeInterval(-172800),
-            subject: "FS: Pottery Barn Kids Bookshelf - White",
+            subject: "FS: 7AM Enfant Toddler Mittens",
             body: """
-            <p>Beautiful white Pottery Barn Kids bookshelf. Perfect for a nursery or kids room.</p>
-            <p>Dimensions: 36"W x 48"H x 12"D</p>
-            <p>A few minor scuffs but overall excellent condition. Retails for $400+.</p>
-            <p>Cash only, must pick up. We're near Prospect Park West.</p>
+            <p>Hi PSP.</p>
+            <p>Selling a pair of super cozy 7AM Enfant toddler Polar Mittens (just like the stroller Warmmuffs but in mitten form!) in great condition.</p>
+            <p>Bordeaux color, soft fuzzy lining.</p>
+            <p>Tag says XL but they look small - would likely fit 2-3 year olds.</p>
+            <p>Asking $10.</p>
+            <p>Pick up in North Slope.</p>
+            <p>Claire (mom to N & J)</p>
             """,
-            snippet: "Beautiful white Pottery Barn Kids bookshelf. Perfect for a nursery or kids room...",
-            senderName: "Jennifer Walsh",
+            snippet: "Selling a pair of super cozy 7AM Enfant toddler Polar Mittens...",
+            senderName: "Claire Bourgeois",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#4CAF50"),
-                Hashtag(name: "Kids", colorHex: "#FF5722")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
+                Hashtag(name: "Toddler", colorHex: "#89bfbd"),
+                Hashtag(name: "NorthSlope", colorHex: "#93ad59")
             ],
             attachments: [
-                Attachment(url: "https://placekittens.com/603/400", thumbnailUrl: "https://placekittens.com/203/200")
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0/image0.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0?thumb=1"
+                )
             ],
-            price: "$150"
+            price: "$10"
         ),
         Post(
             id: 5,
@@ -130,35 +161,48 @@ enum MockData {
         ),
         Post(
             id: 6,
-            topicId: 1006,
+            topicId: 117553733,
             created: Date().addingTimeInterval(-345600),
-            subject: "FS: Uppababy Vista Stroller - 2023 Model",
+            subject: "FS: Large bundle of Magnatiles",
             body: """
-            <p>Selling our beloved Uppababy Vista stroller. 2023 model in Gregory (blue melange) color.</p>
-            <p>Includes:</p>
+            <p>FS: Large bundle of Magnatiles</p>
+            <p>We are ready to part with our beloved (and large!) collection of Magnatiles.</p>
+            <p>The bundle includes the following:</p>
             <ul>
-                <li>Main stroller frame</li>
-                <li>Bassinet + stand</li>
-                <li>Toddler seat</li>
-                <li>Rain cover</li>
-                <li>Bug shield</li>
+                <li>26 big squares</li>
+                <li>76 small squares</li>
+                <li>31 small triangles</li>
+                <li>25 tall triangles</li>
+                <li>15 medium triangles</li>
+                <li>4 rectangles</li>
+                <li>4 animals (jungle)</li>
+                <li>6 windows</li>
+                <li>3 staircases</li>
+                <li>2 truck chassis</li>
+                <li>about 10 miscellaneous shapes</li>
             </ul>
-            <p>Excellent condition - always stored indoors. Original price was $1,100.</p>
-            <p>Located in North Slope.</p>
+            <p>Asking $100 for the bundle (will toss in a fabric IKEA bin to carry them all!)</p>
+            <p>Pick-up center slope this weekend</p>
+            <p>Maren (mom of 2)</p>
             """,
-            snippet: "Selling our beloved Uppababy Vista stroller. 2023 model in Gregory color...",
-            senderName: "David Park",
+            snippet: "We are ready to part with our beloved (and large!) collection of Magnatiles...",
+            senderName: "Maren Ullrich",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#4CAF50"),
-                Hashtag(name: "BabyGear", colorHex: "#00BCD4"),
-                Hashtag(name: "NorthSlope", colorHex: "#9C27B0")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
+                Hashtag(name: "CenterSlope", colorHex: "#4191d6"),
+                Hashtag(name: "Kids", colorHex: "#FF5722")
             ],
             attachments: [
-                Attachment(url: "https://placekittens.com/604/400", thumbnailUrl: "https://placekittens.com/204/200"),
-                Attachment(url: "https://placekittens.com/605/400", thumbnailUrl: "https://placekittens.com/205/200"),
-                Attachment(url: "https://placekittens.com/606/400", thumbnailUrl: "https://placekittens.com/206/200")
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0/IMG_4259.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0?thumb=1"
+                ),
+                Attachment(
+                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1/IMG_4263.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1?thumb=1"
+                )
             ],
-            price: "$650"
+            price: "$100"
         )
     ]
     

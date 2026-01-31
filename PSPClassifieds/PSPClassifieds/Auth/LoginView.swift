@@ -137,8 +137,18 @@ struct LoginWebView: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default() // Shares cookies with HTTPCookieStorage
         
+        // Allow inline media playback and JavaScript
+        config.allowsInlineMediaPlayback = true
+        config.defaultWebpagePreferences.allowsContentJavaScript = true
+        
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator  // Handle JS alerts, new windows, etc.
+        
+        // Enable link interactions
+        webView.allowsBackForwardNavigationGestures = true
+        webView.allowsLinkPreview = true
+        
         webView.load(URLRequest(url: loginURL))
         
         return webView
@@ -150,11 +160,18 @@ struct LoginWebView: UIViewRepresentable {
         Coordinator(parent: self)
     }
     
-    class Coordinator: NSObject, WKNavigationDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         let parent: LoginWebView
         
         init(parent: LoginWebView) {
             self.parent = parent
+        }
+        
+        // MARK: - WKNavigationDelegate
+        
+        // Allow all navigation actions (clicking links)
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            decisionHandler(.allow)
         }
         
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -174,36 +191,74 @@ struct LoginWebView: UIViewRepresentable {
             parent.isLoading = false
         }
         
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            parent.isLoading = false
+            #if DEBUG
+            print("⚠️ WebView navigation failed: \(error.localizedDescription)")
+            #endif
+        }
+        
+        // MARK: - WKUIDelegate
+        
+        // Handle links that open in new windows (target="_blank")
+        func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+            // Load the URL in the same webview instead of opening a new window
+            if let url = navigationAction.request.url {
+                webView.load(URLRequest(url: url))
+            }
+            return nil
+        }
+        
+        // Handle JavaScript alerts
+        func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+            completionHandler()
+        }
+        
+        // Handle JavaScript confirm dialogs
+        func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+            completionHandler(true)
+        }
+        
+        // Handle JavaScript text input prompts
+        func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
+            completionHandler(defaultText)
+        }
+        
         private func checkForSuccessfulLogin(webView: WKWebView) {
-            // Check for session cookie
+            // Check for session cookie and sync to HTTPCookieStorage
             webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self] cookies in
-                let hasSession = cookies.contains { cookie in
-                    cookie.domain.contains("parkslopeparents.com") &&
-                    (cookie.name == "_groupsio_session" || cookie.name.contains("session"))
+                let relevantCookies = cookies.filter { cookie in
+                    cookie.domain.contains("parkslopeparents.com") ||
+                    cookie.domain.contains("groups.io")
                 }
                 
-                if hasSession {
-                    // Also check if we're on a logged-in page (not login page)
-                    webView.evaluateJavaScript("document.querySelector('.logged-in, .user-menu, [data-user]') !== null") { result, _ in
-                        if let isLoggedIn = result as? Bool, isLoggedIn {
-                            Task { @MainActor in
-                                self?.parent.onLoginDetected()
-                            }
-                        }
-                    }
+                // Sync ALL relevant cookies to HTTPCookieStorage for image loading
+                for cookie in relevantCookies {
+                    HTTPCookieStorage.shared.setCookie(cookie)
+                    #if DEBUG
+                    print("🍪 Synced cookie: \(cookie.name) for \(cookie.domain)")
+                    #endif
                 }
-            }
-            
-            // Alternative: check URL patterns that indicate successful login
-            if let url = webView.url?.absoluteString {
-                // If we're on the main groups page (not login), consider it successful
-                if url.contains("/g/") && !url.contains("/login") && !url.contains("/join") {
+                
+                // Check for the actual session cookie (named "groupsio" on .groups.parkslopeparents.com)
+                let hasSession = relevantCookies.contains { cookie in
+                    cookie.name == "groupsio" || 
+                    cookie.name == "_groupsio_session" || 
+                    cookie.name.contains("session")
+                }
+                
+                #if DEBUG
+                print("🔐 Login check - hasSession: \(hasSession), cookies: \(relevantCookies.map { $0.name })")
+                #endif
+                
+                if hasSession {
                     Task { @MainActor in
-                        self.parent.onLoginDetected()
+                        self?.parent.onLoginDetected()
                     }
                 }
             }
         }
+        
     }
 }
 

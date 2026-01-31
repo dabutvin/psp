@@ -31,6 +31,8 @@
 		A10000012999999900000061 /* SavedPostsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000071 /* SavedPostsManager.swift */; };
 		A10000012999999900000062 /* SavedPostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000072 /* SavedPostsView.swift */; };
 		A10000012999999900000063 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000073 /* MainTabView.swift */; };
+		A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000090 /* AuthenticatedImageLoader.swift */; };
+		A10000012999999900000081 /* AuthenticatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000091 /* AuthenticatedImage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +61,8 @@
 		A10000012999999900000071 /* SavedPostsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPostsManager.swift; sourceTree = "<group>"; };
 		A10000012999999900000072 /* SavedPostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPostsView.swift; sourceTree = "<group>"; };
 		A10000012999999900000073 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A10000012999999900000090 /* AuthenticatedImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImageLoader.swift; sourceTree = "<group>"; };
+		A10000012999999900000091 /* AuthenticatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,6 +149,7 @@
 				A1000001299999990000001F /* APIClient.swift */,
 				A10000012999999900000020 /* MockData.swift */,
 				A10000012999999900000071 /* SavedPostsManager.swift */,
+				A10000012999999900000090 /* AuthenticatedImageLoader.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -154,6 +159,7 @@
 			children = (
 				A10000012999999900000027 /* HashtagPill.swift */,
 				A10000012999999900000028 /* SkeletonLoader.swift */,
+				A10000012999999900000091 /* AuthenticatedImage.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -267,6 +273,8 @@
 				A10000012999999900000061 /* SavedPostsManager.swift in Sources */,
 				A10000012999999900000062 /* SavedPostsView.swift in Sources */,
 				A10000012999999900000063 /* MainTabView.swift in Sources */,
+				A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */,
+				A10000012999999900000081 /* AuthenticatedImage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

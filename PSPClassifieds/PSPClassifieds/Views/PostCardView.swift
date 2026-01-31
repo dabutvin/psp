@@ -49,19 +49,11 @@ struct PostThumbnail: View {
     var body: some View {
         Group {
             if let url = url {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    case .failure:
-                        PlaceholderImage()
-                    @unknown default:
-                        PlaceholderImage()
-                    }
+                // Use AuthenticatedImage for groups.parkslopeparents.com images
+                AuthenticatedImage(url: url, contentMode: .fill) {
+                    ProgressView()
+                } errorView: { _ in
+                    PlaceholderImage()
                 }
             } else {
                 PlaceholderImage()

@@ -97,26 +97,17 @@ struct ImageGallery: View {
     var body: some View {
         TabView(selection: $selectedIndex) {
             ForEach(Array(attachments.enumerated()), id: \.element.id) { index, attachment in
-                AsyncImage(url: attachment.imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    case .failure:
-                        VStack {
-                            Image(systemName: "photo")
-                                .font(.largeTitle)
-                                .foregroundStyle(.tertiary)
-                            Text("Failed to load image")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    @unknown default:
-                        EmptyView()
+                AuthenticatedImage(url: attachment.imageURL, contentMode: .fit) {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } errorView: { error in
+                    VStack(spacing: 8) {
+                        Image(systemName: errorIcon(for: error))
+                            .font(.largeTitle)
+                            .foregroundStyle(.tertiary)
+                        Text(errorMessage(for: error))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .tag(index)
@@ -125,6 +116,30 @@ struct ImageGallery: View {
         .tabViewStyle(.page(indexDisplayMode: .automatic))
         .frame(height: 300)
         .background(Color(.secondarySystemBackground))
+    }
+    
+    private func errorIcon(for error: Error) -> String {
+        if let imageError = error as? ImageLoadError {
+            switch imageError {
+            case .httpError(401), .httpError(403), .authenticationRequired:
+                return "lock.fill"
+            default:
+                return "photo"
+            }
+        }
+        return "photo"
+    }
+    
+    private func errorMessage(for error: Error) -> String {
+        if let imageError = error as? ImageLoadError {
+            switch imageError {
+            case .httpError(401), .httpError(403), .authenticationRequired:
+                return "Login required to view image"
+            default:
+                return "Failed to load image"
+            }
+        }
+        return "Failed to load image"
     }
 }
 

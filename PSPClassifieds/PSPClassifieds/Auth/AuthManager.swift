@@ -7,7 +7,9 @@ class AuthManager: ObservableObject {
     @Published var isCheckingAuth = true
     
     private let groupsURL = URL(string: "https://groups.parkslopeparents.com")!
-    private let sessionCookieName = "_groupsio_session"
+    
+    // The actual cookie name used by groups.parkslopeparents.com
+    private let sessionCookieNames = ["groupsio", "_groupsio_session"]
     
     func checkLoginStatus() {
         isCheckingAuth = true
@@ -15,8 +17,16 @@ class AuthManager: ObservableObject {
         // Check for valid session cookie
         let cookies = HTTPCookieStorage.shared.cookies(for: groupsURL) ?? []
         let hasSessionCookie = cookies.contains { cookie in
-            cookie.name == sessionCookieName && !cookie.isExpired
+            sessionCookieNames.contains(cookie.name) && !cookie.isExpired
         }
+        
+        #if DEBUG
+        print("🍪 Checking cookies for \(groupsURL):")
+        for cookie in cookies {
+            print("   - \(cookie.name): domain=\(cookie.domain), expired=\(cookie.isExpired)")
+        }
+        print("🔐 Has session cookie: \(hasSessionCookie)")
+        #endif
         
         isAuthenticated = hasSessionCookie
         isCheckingAuth = false
@@ -35,6 +45,9 @@ class AuthManager: ObservableObject {
         for cookie in cookies {
             HTTPCookieStorage.shared.deleteCookie(cookie)
         }
+        
+        // Clear cached images (they may contain authenticated content)
+        AuthenticatedImageLoader.clearCache()
         
         // Also clear WKWebView data
         WKWebsiteDataStore.default().removeData(
