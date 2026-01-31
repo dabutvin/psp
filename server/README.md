@@ -20,7 +20,8 @@ fly secrets set -a psp-fetcher GROUPS_IO_API_TOKEN=""
 fly deploy -c fly.fetcher.toml
 
 # set schedule for the fetch
-fly machine update <MACHINE_ID> --schedule "hourly" -a psp-fetcher
+fly machines list -a psp-fetcher
+fly machine update <MACHINE_ID> --schedule "hourly" -a psp-fetcher --yes
 
 ```
 
@@ -62,7 +63,7 @@ flyctl -a psp-fetcher ssh console
 
 # change scale count
 fly scale count 1
-fly scale count 1 -a psp-fetcher 
+fly scale count 1 -a psp-fetcher
 ```
 
 ## Docker

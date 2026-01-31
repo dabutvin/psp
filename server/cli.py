@@ -63,6 +63,7 @@ def cmd_test_api(args):
 def cmd_fetch(args):
     """Fetch new messages until we hit one we already have."""
     import logging
+    import time
     from core.logging import setup_logging
 
     from sync.fetch import fetch_new_messages
@@ -83,6 +84,17 @@ def cmd_fetch(args):
     
     if not args.json:
         print(f"Done! Fetched {count} new messages.")
+    
+    # Optional sleep to keep machine alive (for setting up schedules)
+    if args.sleep:
+        logger = logging.getLogger("fetch")
+        logger.info(f"Sleeping for {args.sleep} seconds (set schedule now!)...")
+        remaining = args.sleep
+        while remaining > 0:
+            logger.info(f"  {remaining} seconds remaining...")
+            time.sleep(min(30, remaining))
+            remaining -= 30
+        logger.info("Sleep complete, exiting.")
 
 
 def cmd_backfill(args):
@@ -226,6 +238,9 @@ def main():
     )
     fetch_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+    fetch_parser.add_argument(
+        "--sleep", type=int, default=0, help="Seconds to sleep after fetch (for setting up schedules)"
     )
     fetch_parser.set_defaults(func=cmd_fetch)
 
