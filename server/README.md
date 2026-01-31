@@ -145,6 +145,11 @@ docker logs -f psp-backfill
    uv run python cli.py serve --reload
    ```
 
+8. **Run unit tests:**
+   ```bash
+   uv run pytest tests/ -v
+   ```
+
 ## CLI Commands
 
 ```bash
@@ -177,10 +182,13 @@ server/
 │   ├── client.py       # Groups.io API client
 │   ├── fetch.py        # Fetch new messages
 │   └── backfill.py     # Historical backfill
-└── routers/            # API route handlers
-    ├── messages.py     # /api/v1/messages
-    ├── hashtags.py     # /api/v1/hashtags
-    └── stats.py        # /api/v1/stats
+├── routers/            # API route handlers
+│   ├── messages.py     # /api/v1/messages
+│   ├── hashtags.py     # /api/v1/hashtags
+│   └── stats.py        # /api/v1/stats
+└── tests/              # Unit tests
+    ├── conftest.py     # Pytest fixtures and mock database
+    └── test_messages_hashtag_filter.py
 ```
 
 ## Environment Variables
