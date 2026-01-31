@@ -46,9 +46,52 @@ def cmd_fetch(args):
 
 def cmd_backfill(args):
     """Run historical backfill."""
-    print(f"Backfill not yet implemented (Phase 3)")
-    print(f"  Delay between requests: {args.delay}s")
-    # TODO: Implement in Phase 3
+    import logging
+
+    from backfill import backfill_messages, get_backfill_status, reset_backfill
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
+
+    # Handle --status flag
+    if args.status:
+        status = get_backfill_status()
+        print("Backfill Status:")
+        print(f"  Messages in DB: {status['messages_count']:,}")
+        if status['oldest_message_id']:
+            print(f"  Message ID range: {status['oldest_message_id']:,} - {status['newest_message_id']:,}")
+        print(f"  Backfill complete: {status['is_complete']}")
+        if status['backfill_page_token']:
+            print(f"  Resume token: {status['backfill_page_token']:,}")
+        return
+
+    # Handle --reset flag
+    if args.reset:
+        print("Resetting backfill state...")
+        reset_backfill()
+        print("Done! Run 'backfill' again to start from the beginning.")
+        return
+
+    # Run backfill
+    print(f"Starting backfill (delay: {args.delay}s between requests)...")
+    if args.max:
+        print(f"  Max messages this run: {args.max:,}")
+    print("  Press Ctrl+C to stop gracefully\n")
+
+    count, is_complete = backfill_messages(
+        batch_size=args.batch,
+        max_messages=args.max,
+        delay=args.delay,
+        dry_run=args.dry_run,
+    )
+
+    print(f"\nDone! Fetched {count:,} new messages.")
+    if is_complete:
+        print("Backfill is complete - all historical messages fetched!")
+    else:
+        print("Backfill paused - run again to continue.")
 
 
 def cmd_serve(args):
@@ -93,12 +136,48 @@ def main():
     fetch_parser.set_defaults(func=cmd_fetch)
 
     # backfill command
-    backfill_parser = subparsers.add_parser("backfill", help="Backfill historical data")
+    backfill_parser = subparsers.add_parser(
+        "backfill",
+        help="Backfill historical data (newest to oldest)",
+        description="Fetch historical messages from groups.io, starting with most recent. Resumable - can stop/start anytime.",
+    )
     backfill_parser.add_argument(
         "--delay",
+        type=float,
+        default=5.0,
+        help="Seconds between API requests (default: 5.0, be gentle!)",
+    )
+    backfill_parser.add_argument(
+        "--batch",
         type=int,
-        default=5,
-        help="Seconds between API requests (default: 5)",
+        default=100,
+        help="Messages per API call (default: 100, max: 100)",
+    )
+    backfill_parser.add_argument(
+        "--max",
+        type=int,
+        default=None,
+        help="Max messages to fetch this run (default: no limit)",
+    )
+    backfill_parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Show backfill status and exit",
+    )
+    backfill_parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Reset backfill state to start from beginning",
+    )
+    backfill_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't insert into database",
+    )
+    backfill_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Verbose output",
     )
     backfill_parser.set_defaults(func=cmd_backfill)
 

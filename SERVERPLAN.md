@@ -104,15 +104,19 @@ CREATE TABLE sync_state (
 - ~704,790 messages total
 - At 100 messages per request = ~7,048 API calls needed
 - Plan: 1 request per 5-10 seconds = ~10-20 hours total
+- **Newest first**: Start with recent messages so app is useful right away
 - Make backfill **resumable** (save page_token to DB)
 - Run in background, can stop/start anytime
 
 ### 3.2 Backfill Implementation
-- [ ] Create `backfill.py` module
-- [ ] Use `sort_dir=asc` to go oldest→newest
-- [ ] Track progress via `backfill_page_token` in sync_state
-- [ ] Configurable delay between requests (default: 5s)
-- [ ] CLI: `python backfill.py --delay=5`
+- [x] Create `backfill.py` module
+- [x] Use `sort_dir=desc` to go newest→oldest (recent messages first!)
+- [x] Track progress via `backfill_page_token` in sync_state
+- [x] Configurable delay between requests (default: 5s)
+- [x] CLI: `python cli.py backfill --delay=5`
+- [x] Graceful shutdown on Ctrl+C (SIGINT/SIGTERM)
+- [x] Status check: `python cli.py backfill --status`
+- [x] Reset option: `python cli.py backfill --reset`
 
 ## Phase 4: Production Hardening
 
