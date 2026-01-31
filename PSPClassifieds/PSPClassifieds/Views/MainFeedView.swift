@@ -165,49 +165,108 @@ struct CategoryTab: View {
 // MARK: - Posts List
 struct PostsList: View {
     let viewModel: FeedViewModel
+    @State private var showScrollToTop = false
+    @State private var visibleIndices: Set<Int> = []
+    
+    private let showThreshold = 5 // Show button after scrolling past 5 posts
     
     var body: some View {
-        List {
-            ForEach(viewModel.posts) { post in
-                NavigationLink(value: post) {
-                    PostCardView(post: post)
-                }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                .listRowSeparator(.hidden)
-                .onAppear {
-                    if viewModel.shouldLoadMore(currentPost: post) {
-                        Task {
-                            await viewModel.loadMore()
+        ScrollViewReader { proxy in
+            List {
+                ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
+                    NavigationLink(value: post) {
+                        PostCardView(post: post)
+                    }
+                    .id(index)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .onAppear {
+                        visibleIndices.insert(index)
+                        updateScrollButtonVisibility()
+                        
+                        if viewModel.shouldLoadMore(currentPost: post) {
+                            Task {
+                                await viewModel.loadMore()
+                            }
                         }
                     }
+                    .onDisappear {
+                        visibleIndices.remove(index)
+                        updateScrollButtonVisibility()
+                    }
+                }
+                
+                if viewModel.isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
                 }
             }
-            
-            if viewModel.isLoading {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
+            .listStyle(.plain)
+            .refreshable {
+                await viewModel.refresh()
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if showScrollToTop {
+                    ScrollToTopButton {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            proxy.scrollTo(0, anchor: .top)
+                        }
+                        // Immediately hide when tapped
+                        showScrollToTop = false
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                    .transition(.scale.combined(with: .opacity))
                 }
-                .listRowSeparator(.hidden)
+            }
+            .overlay {
+                if viewModel.posts.isEmpty && !viewModel.isLoading && !viewModel.isRefreshing {
+                    ContentUnavailableView(
+                        "No Posts",
+                        systemImage: "tray",
+                        description: Text("No posts found in this category")
+                    )
+                }
+            }
+            .navigationDestination(for: Post.self) { post in
+                PostDetailView(post: post)
             }
         }
-        .listStyle(.plain)
-        .refreshable {
-            await viewModel.refresh()
+    }
+    
+    private func updateScrollButtonVisibility() {
+        let minVisibleIndex = visibleIndices.min() ?? 0
+        let shouldShow = minVisibleIndex >= showThreshold
+        
+        if shouldShow != showScrollToTop {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showScrollToTop = shouldShow
+            }
         }
-        .overlay {
-            if viewModel.posts.isEmpty && !viewModel.isLoading && !viewModel.isRefreshing {
-                ContentUnavailableView(
-                    "No Posts",
-                    systemImage: "tray",
-                    description: Text("No posts found in this category")
+    }
+}
+
+// MARK: - Scroll To Top Button
+struct ScrollToTopButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.up")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 50, height: 50)
+                .background(
+                    Circle()
+                        .fill(Color.accentColor)
+                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                 )
-            }
         }
-        .navigationDestination(for: Post.self) { post in
-            PostDetailView(post: post)
-        }
+        .buttonStyle(.plain)
     }
 }
 
