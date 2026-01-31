@@ -2,15 +2,30 @@ import Foundation
 
 struct Post: Identifiable, Codable, Hashable {
     let id: Int
-    let topicId: Int
+    let topicId: Int?
     let created: Date
     let subject: String
-    let body: String
+    let body: String?
     let snippet: String
-    let senderName: String
+    let senderName: String?
     let hashtags: [Hashtag]
     let attachments: [Attachment]?
     let price: String?
+    let isReply: Bool?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case topicId = "topic_id"
+        case created
+        case subject
+        case body
+        case snippet
+        case senderName = "name"
+        case hashtags
+        case attachments
+        case price
+        case isReply = "is_reply"
+    }
     
     var category: Category {
         if hashtags.contains(where: { $0.name.lowercased() == "forsale" }) {

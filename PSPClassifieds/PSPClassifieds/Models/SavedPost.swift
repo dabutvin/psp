@@ -4,12 +4,12 @@ import SwiftData
 @Model
 final class SavedPost {
     @Attribute(.unique) var postId: Int
-    var topicId: Int
+    var topicId: Int?
     var created: Date
     var subject: String
-    var body: String
+    var body: String?
     var snippet: String
-    var senderName: String
+    var senderName: String?
     var price: String?
     var savedAt: Date
     
@@ -59,7 +59,8 @@ final class SavedPost {
             senderName: senderName,
             hashtags: hashtags,
             attachments: attachments,
-            price: price
+            price: price,
+            isReply: nil
         )
     }
 }

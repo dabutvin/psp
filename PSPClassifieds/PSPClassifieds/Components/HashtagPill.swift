@@ -44,14 +44,14 @@ struct HashtagPill: View {
 #Preview {
     VStack(spacing: 16) {
         HStack {
-            HashtagPill(hashtag: Hashtag(name: "ForSale", colorHex: "#4CAF50"))
-            HashtagPill(hashtag: Hashtag(name: "NorthSlope", colorHex: "#9C27B0"))
-            HashtagPill(hashtag: Hashtag(name: "BabyGear", colorHex: "#00BCD4"))
+            HashtagPill(hashtag: Hashtag(name: "ForSale", colorHex: "#4CAF50", count: nil))
+            HashtagPill(hashtag: Hashtag(name: "NorthSlope", colorHex: "#9C27B0", count: nil))
+            HashtagPill(hashtag: Hashtag(name: "BabyGear", colorHex: "#00BCD4", count: nil))
         }
         
         HStack {
-            HashtagPill(hashtag: Hashtag(name: "ForSale", colorHex: "#4CAF50"), size: .small)
-            HashtagPill(hashtag: Hashtag(name: "NorthSlope", colorHex: "#9C27B0"), size: .small)
+            HashtagPill(hashtag: Hashtag(name: "ForSale", colorHex: "#4CAF50", count: nil), size: .small)
+            HashtagPill(hashtag: Hashtag(name: "NorthSlope", colorHex: "#9C27B0", count: nil), size: .small)
         }
     }
     .padding()

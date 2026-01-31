@@ -23,12 +23,12 @@ enum APIError: Error, LocalizedError {
 actor APIClient {
     static let shared = APIClient()
     
-    private let baseURL = "http://localhost:8000/api/v1"
+    private let baseURL = "https://psp-api.fly.dev/api/v1"
     private let session: URLSession
     private let decoder: JSONDecoder
     
     // Toggle for mock data during development
-    var useMockData = true
+    var useMockData = false
     
     private init() {
         let config = URLSessionConfiguration.default
@@ -80,8 +80,8 @@ actor APIClient {
                 let query = search.lowercased()
                 filtered = filtered.filter { post in
                     post.subject.lowercased().contains(query) ||
-                    post.body.lowercased().contains(query) ||
-                    post.senderName.lowercased().contains(query)
+                    (post.body?.lowercased().contains(query) ?? false) ||
+                    (post.senderName?.lowercased().contains(query) ?? false)
                 }
             }
             
@@ -144,7 +144,8 @@ actor APIClient {
             throw APIError.invalidURL
         }
         
-        return try await fetch(url: url)
+        let response: HashtagsResponse = try await fetch(url: url)
+        return response.hashtags
     }
     
     // MARK: - Private

@@ -1,13 +1,19 @@
 import Foundation
 
 struct Attachment: Codable, Identifiable, Hashable {
-    let url: String
+    let downloadUrl: String
     let thumbnailUrl: String?
+    let filename: String?
+    let mediaType: String?
+    let attachmentIndex: Int?
     
-    var id: String { url }
+    var id: String { downloadUrl }
+    
+    // Convenience accessors for backwards compatibility
+    var url: String { downloadUrl }
     
     var imageURL: URL? {
-        URL(string: url)
+        URL(string: downloadUrl)
     }
     
     var thumbnailImageURL: URL? {
@@ -16,7 +22,10 @@ struct Attachment: Codable, Identifiable, Hashable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case url
+        case downloadUrl = "download_url"
         case thumbnailUrl = "thumbnail_url"
+        case filename
+        case mediaType = "media_type"
+        case attachmentIndex = "attachment_index"
     }
 }

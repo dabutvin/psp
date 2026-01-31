@@ -27,7 +27,13 @@ struct PostDetailView: View {
                     Divider()
                     
                     // Body
-                    HTMLTextView(html: post.body)
+                    if let body = post.body {
+                        HTMLTextView(html: body)
+                    } else {
+                        Text(post.snippet)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
                     
                     Divider()
                     
@@ -79,7 +85,7 @@ struct PostDetailView: View {
     
     private var senderInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label(post.senderName, systemImage: "person.circle")
+            Label(post.senderName ?? "Unknown Seller", systemImage: "person.circle")
                 .font(.subheadline)
             
             Label(post.created.formatted(date: .long, time: .shortened), systemImage: "calendar")

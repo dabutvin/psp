@@ -3,12 +3,31 @@ import SwiftUI
 
 struct Hashtag: Codable, Identifiable, Hashable {
     let name: String
-    let colorHex: String
+    let colorHex: String?
+    let count: Int?
     
     var id: String { name }
     
+    enum CodingKeys: String, CodingKey {
+        case name
+        case colorHex = "color_hex"
+        case count
+    }
+    
     var color: Color {
-        Color(hex: colorHex) ?? .gray
+        guard let hex = colorHex else { return .gray }
+        return Color(hex: hex) ?? .gray
+    }
+}
+
+// MARK: - Hashtags API Response
+struct HashtagsResponse: Codable {
+    let hashtags: [Hashtag]
+    let totalUnique: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case hashtags
+        case totalUnique = "total_unique"
     }
 }
 

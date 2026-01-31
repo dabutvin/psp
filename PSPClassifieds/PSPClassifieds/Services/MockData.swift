@@ -2,14 +2,14 @@ import Foundation
 
 enum MockData {
     static let hashtags: [Hashtag] = [
-        Hashtag(name: "ForSale", colorHex: "#4CAF50"),
-        Hashtag(name: "ForFree", colorHex: "#2196F3"),
-        Hashtag(name: "ISO", colorHex: "#FF9800"),
-        Hashtag(name: "NorthSlope", colorHex: "#9C27B0"),
-        Hashtag(name: "SouthSlope", colorHex: "#E91E63"),
-        Hashtag(name: "BabyGear", colorHex: "#00BCD4"),
-        Hashtag(name: "Toddler", colorHex: "#FFEB3B"),
-        Hashtag(name: "Kids", colorHex: "#FF5722")
+        Hashtag(name: "ForSale", colorHex: "#4CAF50", count: 150),
+        Hashtag(name: "ForFree", colorHex: "#2196F3", count: 45),
+        Hashtag(name: "ISO", colorHex: "#FF9800", count: 75),
+        Hashtag(name: "NorthSlope", colorHex: "#9C27B0", count: 60),
+        Hashtag(name: "SouthSlope", colorHex: "#E91E63", count: 55),
+        Hashtag(name: "BabyGear", colorHex: "#00BCD4", count: 90),
+        Hashtag(name: "Toddler", colorHex: "#FFEB3B", count: 65),
+        Hashtag(name: "Kids", colorHex: "#FF5722", count: 80)
     ]
     
     static let posts: [Post] = [
@@ -34,22 +34,29 @@ enum MockData {
             snippet: "Selling a bundle of 5 pairs of gently used Adidas sneakers, all size 6 toddler...",
             senderName: "Claire Bourgeois",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#4CAF50"),
-                Hashtag(name: "NorthSlope", colorHex: "#9C27B0"),
-                Hashtag(name: "Toddler", colorHex: "#FFEB3B")
+                Hashtag(name: "ForSale", colorHex: "#4CAF50", count: nil),
+                Hashtag(name: "NorthSlope", colorHex: "#9C27B0", count: nil),
+                Hashtag(name: "Toddler", colorHex: "#FFEB3B", count: nil)
             ],
             attachments: [
                 // Real PSP image URLs - requires authentication
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0/IMG_0739.jpeg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0/IMG_0739.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/0?thumb=1",
+                    filename: "IMG_0739.jpeg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 0
                 ),
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1/IMG_0740.jpeg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1/IMG_0740.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725407/1?thumb=1",
+                    filename: "IMG_0740.jpeg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 1
                 )
             ],
-            price: "$40"
+            price: "$40",
+            isReply: false
         ),
         Post(
             id: 2,
@@ -70,25 +77,35 @@ enum MockData {
             snippet: "Snoo is in excellent condition! We're the second owners and everything works perfectly...",
             senderName: "Caroline Appling",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
-                Hashtag(name: "ProspectHeights", colorHex: "#93ad59"),
-                Hashtag(name: "BabyGear", colorHex: "#8ec2ee")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
+                Hashtag(name: "ProspectHeights", colorHex: "#93ad59", count: nil),
+                Hashtag(name: "BabyGear", colorHex: "#8ec2ee", count: nil)
             ],
             attachments: [
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0/IMG_1286.jpg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0/IMG_1286.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0?thumb=1",
+                    filename: "IMG_1286.jpg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 0
                 ),
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1/IMG_1296.jpg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1/IMG_1296.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/1?thumb=1",
+                    filename: "IMG_1296.jpg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 1
                 ),
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2/IMG_1299.jpg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2/IMG_1299.jpg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/2?thumb=1",
+                    filename: "IMG_1299.jpg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 2
                 )
             ],
-            price: "$500"
+            price: "$500",
+            isReply: false
         ),
         Post(
             id: 3,
@@ -103,11 +120,12 @@ enum MockData {
             snippet: "Looking for a double jogging stroller, preferably Bob Revolution Duallie...",
             senderName: "Sarah Kim",
             hashtags: [
-                Hashtag(name: "ISO", colorHex: "#FF9800"),
-                Hashtag(name: "BabyGear", colorHex: "#00BCD4")
+                Hashtag(name: "ISO", colorHex: "#FF9800", count: nil),
+                Hashtag(name: "BabyGear", colorHex: "#00BCD4", count: nil)
             ],
             attachments: nil,
-            price: nil
+            price: nil,
+            isReply: false
         ),
         Post(
             id: 4,
@@ -126,17 +144,21 @@ enum MockData {
             snippet: "Selling a pair of super cozy 7AM Enfant toddler Polar Mittens...",
             senderName: "Claire Bourgeois",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
-                Hashtag(name: "Toddler", colorHex: "#89bfbd"),
-                Hashtag(name: "NorthSlope", colorHex: "#93ad59")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
+                Hashtag(name: "Toddler", colorHex: "#89bfbd", count: nil),
+                Hashtag(name: "NorthSlope", colorHex: "#93ad59", count: nil)
             ],
             attachments: [
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0/image0.jpeg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0/image0.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725414/0?thumb=1",
+                    filename: "image0.jpeg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 0
                 )
             ],
-            price: "$10"
+            price: "$10",
+            isReply: false
         ),
         Post(
             id: 5,
@@ -152,12 +174,13 @@ enum MockData {
             snippet: "Cleaning out closets! Free bag of kids clothes, mostly size 4-5...",
             senderName: "Amy Chen",
             hashtags: [
-                Hashtag(name: "ForFree", colorHex: "#2196F3"),
-                Hashtag(name: "Kids", colorHex: "#FF5722"),
-                Hashtag(name: "SouthSlope", colorHex: "#E91E63")
+                Hashtag(name: "ForFree", colorHex: "#2196F3", count: nil),
+                Hashtag(name: "Kids", colorHex: "#FF5722", count: nil),
+                Hashtag(name: "SouthSlope", colorHex: "#E91E63", count: nil)
             ],
             attachments: nil,
-            price: nil
+            price: nil,
+            isReply: false
         ),
         Post(
             id: 6,
@@ -188,21 +211,28 @@ enum MockData {
             snippet: "We are ready to part with our beloved (and large!) collection of Magnatiles...",
             senderName: "Maren Ullrich",
             hashtags: [
-                Hashtag(name: "ForSale", colorHex: "#8ec2ee"),
-                Hashtag(name: "CenterSlope", colorHex: "#4191d6"),
-                Hashtag(name: "Kids", colorHex: "#FF5722")
+                Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
+                Hashtag(name: "CenterSlope", colorHex: "#4191d6", count: nil),
+                Hashtag(name: "Kids", colorHex: "#FF5722", count: nil)
             ],
             attachments: [
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0/IMG_4259.jpeg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0/IMG_4259.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/0?thumb=1",
+                    filename: "IMG_4259.jpeg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 0
                 ),
                 Attachment(
-                    url: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1/IMG_4263.jpeg",
-                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1?thumb=1"
+                    downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1/IMG_4263.jpeg",
+                    thumbnailUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/725409/1?thumb=1",
+                    filename: "IMG_4263.jpeg",
+                    mediaType: "image/jpeg",
+                    attachmentIndex: 1
                 )
             ],
-            price: "$100"
+            price: "$100",
+            isReply: false
         )
     ]
     
