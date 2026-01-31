@@ -50,6 +50,7 @@ class MessageSummary(BaseModel):
     created: datetime | None = None
     name: str | None = None
     sender_email: str | None = None
+    msg_num: int | None = None
     hashtags: list[Hashtag] = Field(default_factory=list)
     attachments: list[Attachment] = Field(default_factory=list)
     price: str | None = None
@@ -62,7 +63,6 @@ class MessageDetail(MessageSummary):
     
     body: str | None = None
     topic_id: int | None = None
-    msg_num: int | None = None
     reply_to: str | None = None
 
 
@@ -226,7 +226,7 @@ async def list_messages(
     # Build and execute query
     query = f"""
         SELECT DISTINCT m.id, m.subject, m.snippet, m.created, m.name, m.sender_email,
-               m.is_reply, m.body
+               m.msg_num, m.is_reply, m.body
         FROM messages m
         {hashtag_join}
         {where_clause}
@@ -258,6 +258,7 @@ async def list_messages(
                 created=row["created"],
                 name=row["name"],
                 sender_email=row["sender_email"],
+                msg_num=row["msg_num"],
                 is_reply=row["is_reply"],
                 hashtags=msg_hashtags,
                 attachments=attachments_by_msg.get(row["id"], []),

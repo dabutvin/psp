@@ -108,34 +108,6 @@ class GroupsIOClient:
         response = self._make_request(url, params)
         return GroupsIOResponse.model_validate(response)
 
-    def get_message(self, message_id: int) -> Message | None:
-        """
-        Fetch a single message by ID.
-
-        Args:
-            message_id: The message ID to fetch
-
-        Returns:
-            Message object or None if not found
-        """
-        # Note: groups.io may not have a single-message endpoint
-        # This might need to be implemented differently
-        url = f"{self.base_url}/getmessage"
-        params = {"message_id": message_id}
-
-        try:
-            response = self._make_request(url, params)
-            if response:
-                from core.models import GroupsIOMessage
-
-                msg = GroupsIOMessage.model_validate(response)
-                return msg.to_message()
-        except APIError as e:
-            if e.status_code == 404:
-                return None
-            raise
-
-        return None
 
     def _make_request(self, url: str, params: dict) -> dict:
         """
