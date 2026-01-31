@@ -3,7 +3,7 @@ Messages API router.
 
 Endpoints:
 - GET /messages - List messages with pagination, filtering, search
-- GET /messages/{id} - Get single message with full body
+- GET /messages/{id} - Get single message by ID
 - GET /topics/{topic_id}/messages - Get all messages in a thread
 """
 
@@ -41,12 +41,14 @@ def _check_etag(request_etag: str | None, current_etag: str) -> bool:
 
 
 # Response models
-class MessageSummary(BaseModel):
-    """Message summary for list views (excludes full body)."""
+class Message(BaseModel):
+    """Full message model."""
     
     id: int
+    topic_id: int | None = None
     subject: str | None = None
     snippet: str | None = None
+    body: str | None = None
     created: datetime | None = None
     name: str | None = None
     sender_email: str | None = None
@@ -58,18 +60,10 @@ class MessageSummary(BaseModel):
     is_reply: bool = False
 
 
-class MessageDetail(MessageSummary):
-    """Full message detail including body."""
-    
-    body: str | None = None
-    topic_id: int | None = None
-    reply_to: str | None = None
-
-
 class MessagesResponse(BaseModel):
     """Paginated messages response."""
     
-    messages: list[MessageSummary]
+    messages: list[Message]
     has_more: bool
     next_cursor: str | None = None
 
@@ -78,7 +72,7 @@ class TopicMessagesResponse(BaseModel):
     """All messages in a topic/thread."""
     
     topic_id: int
-    messages: list[MessageDetail]
+    messages: list[Message]
     count: int
 
 
@@ -225,8 +219,8 @@ async def list_messages(
     
     # Build and execute query
     query = f"""
-        SELECT DISTINCT m.id, m.subject, m.snippet, m.created, m.name, m.sender_email,
-               m.msg_num, m.is_reply, m.body
+        SELECT DISTINCT m.id, m.topic_id, m.subject, m.snippet, m.body, m.created,
+               m.name, m.sender_email, m.msg_num, m.is_reply
         FROM messages m
         {hashtag_join}
         {where_clause}
@@ -251,10 +245,12 @@ async def list_messages(
     for row in rows:
         msg_hashtags = hashtags_by_msg.get(row["id"], [])
         messages.append(
-            MessageSummary(
+            Message(
                 id=row["id"],
+                topic_id=row["topic_id"],
                 subject=row["subject"],
                 snippet=row["snippet"],
+                body=row["body"],
                 created=row["created"],
                 name=row["name"],
                 sender_email=row["sender_email"],
@@ -300,7 +296,7 @@ async def list_messages(
     )
 
 
-@router.get("/messages/{message_id}", response_model=MessageDetail)
+@router.get("/messages/{message_id}", response_model=Message)
 @limiter.limit("120/minute")
 async def get_message(
     request: Request,
@@ -309,9 +305,7 @@ async def get_message(
     if_none_match: Annotated[str | None, Header()] = None,
 ):
     """
-    Get a single message with full body content.
-    
-    Use this for the detail view when user taps on a message.
+    Get a single message by ID.
     
     **Caching**: Returns ETag header. Send `If-None-Match` with the ETag
     to get a 304 Not Modified if the message hasn't changed.
@@ -321,7 +315,7 @@ async def get_message(
     row = await db.fetchrow(
         """
         SELECT id, topic_id, subject, body, snippet, created, updated, name, sender_email,
-               msg_num, is_reply, reply_to
+               msg_num, is_reply
         FROM messages
         WHERE id = $1
         """,
@@ -346,7 +340,7 @@ async def get_message(
     hashtags_by_msg, attachments_by_msg = await _fetch_related_data(db, [message_id])
     msg_hashtags = hashtags_by_msg.get(message_id, [])
     
-    return MessageDetail(
+    return Message(
         id=row["id"],
         topic_id=row["topic_id"],
         subject=row["subject"],
@@ -357,7 +351,6 @@ async def get_message(
         sender_email=row["sender_email"],
         msg_num=row["msg_num"],
         is_reply=row["is_reply"],
-        reply_to=row["reply_to"],
         hashtags=msg_hashtags,
         attachments=attachments_by_msg.get(message_id, []),
         price=extract_price(row["subject"], row["body"]),
@@ -379,7 +372,7 @@ async def get_topic_messages(request: Request, topic_id: int):
     rows = await db.fetch(
         """
         SELECT id, topic_id, subject, body, snippet, created, name, sender_email,
-               msg_num, is_reply, reply_to
+               msg_num, is_reply
         FROM messages
         WHERE topic_id = $1
         ORDER BY created ASC
@@ -398,7 +391,7 @@ async def get_topic_messages(request: Request, topic_id: int):
     for row in rows:
         msg_hashtags = hashtags_by_msg.get(row["id"], [])
         messages.append(
-            MessageDetail(
+            Message(
                 id=row["id"],
                 topic_id=row["topic_id"],
                 subject=row["subject"],
@@ -409,7 +402,6 @@ async def get_topic_messages(request: Request, topic_id: int):
                 sender_email=row["sender_email"],
                 msg_num=row["msg_num"],
                 is_reply=row["is_reply"],
-                reply_to=row["reply_to"],
                 hashtags=msg_hashtags,
                 attachments=attachments_by_msg.get(row["id"], []),
                 price=extract_price(row["subject"], row["body"]),
