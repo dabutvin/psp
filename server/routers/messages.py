@@ -7,10 +7,11 @@ Endpoints:
 - GET /topics/{topic_id}/messages - Get all messages in a thread
 """
 
+import hashlib
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -23,6 +24,20 @@ logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
+
+
+def _generate_etag(*args) -> str:
+    """Generate an ETag from arbitrary arguments."""
+    content = ":".join(str(a) for a in args)
+    return f'"{hashlib.md5(content.encode()).hexdigest()}"'
+
+
+def _check_etag(request_etag: str | None, current_etag: str) -> bool:
+    """Check if client's ETag matches (return True if match = 304)."""
+    if not request_etag:
+        return False
+    # Handle both quoted and unquoted ETags
+    return request_etag.strip('"') == current_etag.strip('"')
 
 
 # Response models
@@ -139,11 +154,13 @@ async def _fetch_related_data(
 @limiter.limit("60/minute")
 async def list_messages(
     request: Request,
+    response: Response,
     limit: Annotated[int, Query(ge=1, le=100, description="Number of messages to return")] = 20,
     cursor: Annotated[str | None, Query(description="Pagination cursor (message ID)")] = None,
     since: Annotated[datetime | None, Query(description="Return messages after this date")] = None,
     hashtag: Annotated[str | None, Query(description="Filter by hashtag (ForSale, ForFree, ISO)")] = None,
     search: Annotated[str | None, Query(description="Full-text search query")] = None,
+    if_none_match: Annotated[str | None, Header()] = None,
 ):
     """
     List messages with pagination and filtering.
@@ -155,6 +172,8 @@ async def list_messages(
     - `hashtag`: Filter by category (ForSale, ForFree, ISO, etc.)
     - `search`: Full-text search in subject and body
     - `since`: Only messages created after this timestamp
+    
+    **Caching**: Returns ETag header based on the first message ID in results.
     """
     db = get_database()
     
@@ -248,6 +267,19 @@ async def list_messages(
     # Next cursor is the ID of the last message
     next_cursor = str(messages[-1].id) if messages and has_more else None
     
+    # Generate ETag based on first message ID and query params
+    if messages:
+        etag = _generate_etag(messages[0].id, cursor, hashtag, search, limit)
+        
+        # Check if client has current version
+        if _check_etag(if_none_match, etag):
+            return Response(status_code=304, headers={"ETag": etag})
+        
+        response.headers["ETag"] = etag
+    
+    # Cache for 30 seconds (list can change frequently)
+    response.headers["Cache-Control"] = "private, max-age=30"
+    
     logger.info(
         f"Listed {len(messages)} messages",
         extra={
@@ -267,17 +299,25 @@ async def list_messages(
 
 @router.get("/messages/{message_id}", response_model=MessageDetail)
 @limiter.limit("120/minute")
-async def get_message(request: Request, message_id: int):
+async def get_message(
+    request: Request,
+    response: Response,
+    message_id: int,
+    if_none_match: Annotated[str | None, Header()] = None,
+):
     """
     Get a single message with full body content.
     
     Use this for the detail view when user taps on a message.
+    
+    **Caching**: Returns ETag header. Send `If-None-Match` with the ETag
+    to get a 304 Not Modified if the message hasn't changed.
     """
     db = get_database()
     
     row = await db.fetchrow(
         """
-        SELECT id, topic_id, subject, body, snippet, created, name, sender_email,
+        SELECT id, topic_id, subject, body, snippet, created, updated, name, sender_email,
                msg_num, is_reply, reply_to
         FROM messages
         WHERE id = $1
@@ -287,6 +327,17 @@ async def get_message(request: Request, message_id: int):
     
     if not row:
         raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Generate ETag based on message ID and updated timestamp
+    etag = _generate_etag(message_id, row["updated"] or row["created"])
+    
+    # Check if client has current version
+    if _check_etag(if_none_match, etag):
+        return Response(status_code=304, headers={"ETag": etag})
+    
+    # Set ETag header
+    response.headers["ETag"] = etag
+    response.headers["Cache-Control"] = "private, max-age=60"
     
     # Fetch related data
     hashtags_by_msg, attachments_by_msg = await _fetch_related_data(db, [message_id])

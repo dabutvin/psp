@@ -7,7 +7,7 @@ Endpoints:
 
 from datetime import datetime
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -33,12 +33,14 @@ class StatsResponse(BaseModel):
 
 @router.get("/stats", response_model=StatsResponse)
 @limiter.limit("30/minute")
-async def get_stats(request: Request):
+async def get_stats(request: Request, response: Response):
     """
     Get system statistics.
     
     Returns total message count, date range, and sync status.
     Useful for showing "Last updated" in the app.
+    
+    **Caching**: Returns `Last-Modified` header based on last sync time.
     """
     db = get_database()
     
@@ -59,10 +61,18 @@ async def get_stats(request: Request):
         """
     )
     
+    # Set Last-Modified header if we have a sync time
+    last_sync = sync_row["last_fetch_at"] if sync_row else None
+    if last_sync:
+        response.headers["Last-Modified"] = last_sync.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    
+    # Cache for 60 seconds
+    response.headers["Cache-Control"] = "private, max-age=60"
+    
     return StatsResponse(
         total_messages=msg_row["total"],
         newest_message_date=msg_row["newest"],
         oldest_message_date=msg_row["oldest"],
-        last_sync=sync_row["last_fetch_at"] if sync_row else None,
+        last_sync=last_sync,
         backfill_in_progress=bool(sync_row["backfill_page_token"]) if sync_row else False,
     )

@@ -169,63 +169,35 @@ ORDER BY ts_rank(search_vector, plainto_tsquery('english', 'baby stroller')) DES
 - [x] Read-only endpoints only (no writes from clients)
 - [x] CLI: `python cli.py serve --host 0.0.0.0 --port 8000 --reload`
 
-### 5.2 API Endpoints
+### 5.2 API Endpoints ✓
 
-```
-GET /api/v1/messages
-  Query params:
-    - limit (default: 20, max: 100)
-    - cursor (pagination - message ID, fetch posts older than this)
-    - since (ISO timestamp - messages after this date)
-    - hashtag (filter by hashtag name: ForSale, ForFree, ISO)
-    - search (full-text search query)
-  Returns: {
-    messages: [{
-      id, subject, snippet, created, name, sender_email,
-      hashtags: [{name, color_hex}],
-      attachments: [{download_url, thumbnail_url, filename}],
-      price,        // extracted, nullable
-      category      // derived from hashtags
-    }],
-    has_more: bool,
-    next_cursor: string   // ID of last message, use for next page
-  }
-  
-  **Cursor Pagination (for infinite scroll)**:
-  - Default sort: newest first (created DESC)
-  - cursor = message ID of last item in current page
-  - Query: WHERE id < cursor ORDER BY created DESC LIMIT 20
-  - Stable during new inserts (unlike offset-based)
-  
-  Example flow:
-    1. GET /messages?hashtag=ForSale&limit=20
-       → returns messages, next_cursor="262078200"
-    2. GET /messages?hashtag=ForSale&limit=20&cursor=262078200
-       → returns older messages, next_cursor="262078150"
-    3. ... repeat until has_more=false
+All endpoints implemented in `routers/`:
 
-GET /api/v1/messages/{id}
-  Returns: single message with full body (for detail view)
-  Includes: all fields above + full body text
+| Endpoint | Description | Rate Limit |
+|----------|-------------|------------|
+| `GET /api/v1/messages` | List with cursor pagination, filtering, search | 60/min |
+| `GET /api/v1/messages/{id}` | Single message with full body | 120/min |
+| `GET /api/v1/topics/{topic_id}/messages` | Thread/conversation view | 60/min |
+| `GET /api/v1/hashtags` | Hashtags with counts | 30/min |
+| `GET /api/v1/stats` | System statistics | 30/min |
+| `GET /health` | Health check | - |
 
-GET /api/v1/topics/{topic_id}/messages
-  Returns: all messages in a thread/topic (for conversation view)
+Query params for `/messages`:
+- `limit` (1-100, default: 20)
+- `cursor` (message ID for pagination)
+- `since` (ISO timestamp)
+- `hashtag` (filter: ForSale, ForFree, ISO)
+- `search` (full-text search)
 
-GET /api/v1/hashtags
-  Returns: list of hashtags with message counts
-  Example: [{ name: "ForSale", color_hex: "#8ec2ee", count: 239261 }]
-
-GET /api/v1/stats
-  Returns: { total_messages, newest_message_date, last_sync }
-
-```
-
-### 5.3 iPhone App Considerations
-- **Response format**: JSON, optimized for mobile (include snippets, avoid huge bodies in list views)
-- **Pagination**: Cursor-based preferred (stable during new message inserts)
-- **Caching headers**: ETags or Last-Modified for efficient polling
-- **Compression**: gzip responses (FastAPI/uvicorn handle this)
-- **CORS**: Configure if needed for any web clients
+### 5.3 iPhone App Considerations ✓
+- [x] **Response format**: JSON, optimized for mobile (snippets in list, full body in detail)
+- [x] **Pagination**: Cursor-based (stable during new message inserts)
+- [x] **Caching headers**: 
+  - ETags on `/messages`, `/messages/{id}`, `/hashtags`
+  - Last-Modified on `/stats`
+  - Cache-Control headers (30s-5min depending on endpoint)
+- [x] **Compression**: GZip middleware for responses > 1KB
+- [x] **CORS**: Configured for cross-origin requests
 
 ### 5.4 Derived Fields (computed on server)
 Server extracts/computes these fields so clients don't need to parse:
