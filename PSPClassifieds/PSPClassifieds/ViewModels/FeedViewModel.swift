@@ -111,6 +111,18 @@ class FeedViewModel {
         await refresh()
     }
     
+    func removeHashtagFilter(_ hashtag: String) async {
+        filterHashtags.removeAll { $0 == hashtag }
+        posts = []
+        await refresh()
+    }
+    
+    func clearDateFilter() async {
+        filterSinceDate = nil
+        posts = []
+        await refresh()
+    }
+    
     func shouldLoadMore(currentPost: Post) -> Bool {
         guard let index = posts.firstIndex(of: currentPost) else { return false }
         return index >= posts.count - 3

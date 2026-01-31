@@ -9,11 +9,24 @@ struct MainFeedView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Active Filters Banner
+                // Active Filters Bar
                 if viewModel.hasActiveFilters {
-                    ActiveFiltersBanner(
-                        filterCount: viewModel.activeFilterCount,
-                        onClear: {
+                    ActiveFiltersBar(
+                        hashtags: viewModel.filterHashtags,
+                        sinceDate: viewModel.filterSinceDate,
+                        onRemoveHashtag: { hashtag in
+                            Task {
+                                filterViewModel.selectedHashtags.remove(hashtag)
+                                await viewModel.removeHashtagFilter(hashtag)
+                            }
+                        },
+                        onRemoveDate: {
+                            Task {
+                                filterViewModel.dateRange = .all
+                                await viewModel.clearDateFilter()
+                            }
+                        },
+                        onClearAll: {
                             Task {
                                 filterViewModel.clearFilters()
                                 await viewModel.clearFilters()
@@ -21,16 +34,6 @@ struct MainFeedView: View {
                         }
                     )
                 }
-                
-                // Category Tabs
-                CategoryTabBar(
-                    selectedCategory: viewModel.selectedCategory,
-                    onSelect: { category in
-                        Task {
-                            await viewModel.changeCategory(category)
-                        }
-                    }
-                )
                 
                 // Posts List
                 PostsList(viewModel: viewModel)
@@ -95,51 +98,68 @@ struct MainFeedView: View {
     }
 }
 
-// MARK: - Active Filters Banner
-struct ActiveFiltersBanner: View {
-    let filterCount: Int
-    let onClear: () -> Void
+// MARK: - Active Filters Bar
+struct ActiveFiltersBar: View {
+    let hashtags: [String]
+    let sinceDate: Date?
+    let onRemoveHashtag: (String) -> Void
+    let onRemoveDate: () -> Void
+    let onClearAll: () -> Void
     
-    var body: some View {
-        HStack {
-            Image(systemName: "line.3.horizontal.decrease")
-                .font(.caption)
-            
-            Text("\(filterCount) filter\(filterCount == 1 ? "" : "s") active")
-                .font(.caption)
-                .fontWeight(.medium)
-            
-            Spacer()
-            
-            Button("Clear", action: onClear)
-                .font(.caption)
-                .fontWeight(.semibold)
+    private var dateLabel: String? {
+        guard let date = sinceDate else { return nil }
+        let calendar = Calendar.current
+        let now = Date()
+        let daysDiff = calendar.dateComponents([.day], from: date, to: now).day ?? 0
+        
+        if daysDiff <= 1 {
+            return "Today"
+        } else if daysDiff <= 7 {
+            return "This Week"
+        } else if daysDiff <= 31 {
+            return "This Month"
+        } else if daysDiff <= 93 {
+            return "Last 3 Months"
+        } else {
+            return "Custom Date"
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color.accentColor.opacity(0.1))
-        .foregroundStyle(Color.accentColor)
     }
-}
-
-// MARK: - Category Tab Bar
-struct CategoryTabBar: View {
-    let selectedCategory: Category
-    let onSelect: (Category) -> Void
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(Category.allCases) { category in
-                    CategoryTab(
-                        category: category,
-                        isSelected: category == selectedCategory,
-                        onTap: { onSelect(category) }
+                // Date filter chip
+                if let label = dateLabel {
+                    FilterChip(
+                        label: label,
+                        icon: "calendar",
+                        onRemove: onRemoveDate
                     )
+                }
+                
+                // Hashtag filter chips
+                ForEach(hashtags, id: \.self) { hashtag in
+                    FilterChip(
+                        label: "#\(hashtag)",
+                        icon: nil,
+                        onRemove: { onRemoveHashtag(hashtag) }
+                    )
+                }
+                
+                // Clear all button (only if multiple filters)
+                if hashtags.count + (sinceDate != nil ? 1 : 0) > 1 {
+                    Button(action: onClearAll) {
+                        Text("Clear All")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 4)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
         }
         .background(Color(.systemBackground))
         .overlay(alignment: .bottom) {
@@ -148,21 +168,33 @@ struct CategoryTabBar: View {
     }
 }
 
-struct CategoryTab: View {
-    let category: Category
-    let isSelected: Bool
-    let onTap: () -> Void
+// MARK: - Filter Chip
+struct FilterChip: View {
+    let label: String
+    let icon: String?
+    let onRemove: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
-            Text(category.displayName)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.accentColor : Color(.secondarySystemBackground))
-                .foregroundStyle(isSelected ? .white : .primary)
-                .clipShape(Capsule())
+        Button(action: onRemove) {
+            HStack(spacing: 6) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.caption)
+                }
+                
+                Text(label)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Image(systemName: "xmark")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.accentColor.opacity(0.12))
+            .foregroundStyle(Color.accentColor)
+            .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -247,7 +279,7 @@ struct PostsList: View {
                         ContentUnavailableView(
                             "No Posts",
                             systemImage: "tray",
-                            description: Text("No posts found in this category")
+                            description: Text("No posts match your filters")
                         )
                     }
                 }

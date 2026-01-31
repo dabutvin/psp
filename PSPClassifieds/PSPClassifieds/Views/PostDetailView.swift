@@ -240,7 +240,7 @@ struct HTMLTextView: View {
         var result = AttributedString()
         
         // Preprocess: normalize line breaks
-        var processed = html
+        let processed = html
             .replacingOccurrences(of: "<br>", with: "\n")
             .replacingOccurrences(of: "<br/>", with: "\n")
             .replacingOccurrences(of: "<br />", with: "\n")
