@@ -12,6 +12,7 @@ IMPORTANT: Be gentle with the API!
 - Resumable via backfill_page_token in sync_state
 """
 
+import logging
 import signal
 import time
 from datetime import datetime, timezone
@@ -19,10 +20,10 @@ from datetime import datetime, timezone
 import psycopg2
 from psycopg2.extras import execute_values
 
-from api_client import GroupsIOClient, RateLimitError
-from config import get_db_url
-from logging_config import get_logger
-from models import Message
+from sync.client import GroupsIOClient, RateLimitError
+from core.config import get_db_url
+from core.logging import get_logger
+from core.models import Message
 
 logger = get_logger(__name__)
 

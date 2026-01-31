@@ -56,6 +56,10 @@ fly ssh console -C "uv run python cli.py fetch"
 fly machines list
 fly machines list -a psp-fetcher  
 
+# ssh into container
+flyctl ssh console
+flyctl -a psp-fetcher ssh console
+
 # change scale count
 fly scale count 1
 fly scale count 1 -a psp-fetcher 
@@ -160,16 +164,18 @@ server/
 ├── Dockerfile          # Container image definition
 ├── docker-compose.yml  # Multi-container orchestration
 ├── cli.py              # Command-line interface
-├── config.py           # Configuration/settings
-├── db.py               # Database connection and schema
-├── models.py           # Pydantic data models
-├── api_client.py       # Groups.io API client
-├── fetch.py            # Fetch new messages
-├── backfill.py         # Historical backfill
-├── server.py           # FastAPI server
-├── logging_config.py   # Structured logging
-├── stats.py            # System statistics
-├── migrations.py       # Database migrations
+├── server.py           # FastAPI server entry point
+├── core/               # Core infrastructure
+│   ├── config.py       # Configuration/settings
+│   ├── database.py     # Database connection and schema
+│   ├── logging.py      # Structured logging
+│   ├── models.py       # Pydantic data models
+│   ├── stats.py        # System statistics
+│   └── migrations.py   # Database migrations
+├── sync/               # Data synchronization
+│   ├── client.py       # Groups.io API client
+│   ├── fetch.py        # Fetch new messages
+│   └── backfill.py     # Historical backfill
 └── routers/            # API route handlers
     ├── messages.py     # /api/v1/messages
     ├── hashtags.py     # /api/v1/hashtags

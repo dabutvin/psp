@@ -13,7 +13,7 @@ from typing import Any
 
 import psycopg2
 
-from config import get_db_url
+from core.config import get_db_url
 
 
 def get_system_stats() -> dict[str, Any]:

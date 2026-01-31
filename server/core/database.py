@@ -11,7 +11,7 @@ import asyncpg
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from config import get_db_url
+from core.config import get_db_url
 
 # Schema definition
 SCHEMA_SQL = """

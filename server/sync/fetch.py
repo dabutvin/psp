@@ -8,10 +8,10 @@ from datetime import datetime, timezone
 import psycopg2
 from psycopg2.extras import execute_values
 
-from api_client import GroupsIOClient, RateLimitError
-from config import get_db_url
-from logging_config import get_logger
-from models import Message
+from sync.client import GroupsIOClient, RateLimitError
+from core.config import get_db_url
+from core.logging import get_logger
+from core.models import Message
 
 logger = get_logger(__name__)
 
@@ -194,6 +194,7 @@ def _insert_messages(cur, messages: list[Message]) -> None:
 
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",

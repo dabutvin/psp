@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from db import get_database
-from logging_config import get_logger
+from core.database import get_database
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)

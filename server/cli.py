@@ -9,7 +9,7 @@ import sys
 
 def cmd_init_db(args):
     """Initialize the database schema."""
-    from db import init_schema_sync
+    from core.database import init_schema_sync
 
     print("Initializing database schema...")
     init_schema_sync()
@@ -17,7 +17,7 @@ def cmd_init_db(args):
 
 def cmd_stats(args):
     """Show system statistics."""
-    from stats import get_system_stats, print_stats
+    from core.stats import get_system_stats, print_stats
 
     if args.json:
         import json
@@ -31,8 +31,8 @@ def cmd_stats(args):
 def cmd_migrate_search(args):
     """Migrate search vectors for existing messages."""
     import logging
-    from logging_config import setup_logging
-    from migrations import migrate_search_vectors, print_migration_status
+    from core.logging import setup_logging
+    from core.migrations import migrate_search_vectors, print_migration_status
 
     if args.status:
         print_migration_status()
@@ -53,7 +53,7 @@ def cmd_migrate_search(args):
 
 def cmd_test_api(args):
     """Test API connectivity."""
-    from api_client import test_connection
+    from sync.client import test_connection
 
     print("Testing groups.io API connection...")
     success = test_connection()
@@ -63,9 +63,9 @@ def cmd_test_api(args):
 def cmd_fetch(args):
     """Fetch new messages until we hit one we already have."""
     import logging
-    from logging_config import setup_logging
+    from core.logging import setup_logging
 
-    from fetch import fetch_new_messages
+    from sync.fetch import fetch_new_messages
 
     setup_logging(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -89,9 +89,9 @@ def cmd_backfill(args):
     """Run historical backfill."""
     import json
     import logging
-    from logging_config import setup_logging
+    from core.logging import setup_logging
 
-    from backfill import backfill_messages, get_backfill_status, reset_backfill
+    from sync.backfill import backfill_messages, get_backfill_status, reset_backfill
 
     setup_logging(
         level=logging.DEBUG if args.verbose else logging.INFO,

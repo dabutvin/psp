@@ -11,8 +11,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config import get_settings
-from models import GroupsIOResponse, Message
+from core.config import get_settings
+from core.models import GroupsIOResponse, Message
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class GroupsIOClient:
         try:
             response = self._make_request(url, params)
             if response:
-                from models import GroupsIOMessage
+                from core.models import GroupsIOMessage
 
                 msg = GroupsIOMessage.model_validate(response)
                 return msg.to_message()

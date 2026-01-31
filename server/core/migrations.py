@@ -9,8 +9,8 @@ import time
 
 import psycopg2
 
-from config import get_db_url
-from logging_config import get_logger
+from core.config import get_db_url
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 

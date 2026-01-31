@@ -15,9 +15,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import get_settings
-from db import get_database
-from logging_config import get_logger, setup_logging
+from core.config import get_settings
+from core.database import get_database
+from core.logging import get_logger, setup_logging
 
 # Set up logging
 setup_logging()
