@@ -39,8 +39,8 @@ enum MockData {
                 Hashtag(name: "Toddler", colorHex: "#FFEB3B")
             ],
             attachments: [
-                Attachment(url: "https://example.com/shoes1.jpg", thumbnailUrl: "https://example.com/shoes1_thumb.jpg"),
-                Attachment(url: "https://example.com/shoes2.jpg", thumbnailUrl: "https://example.com/shoes2_thumb.jpg")
+                Attachment(url: "https://placekittens.com/600/400", thumbnailUrl: "https://placekittens.com/200/200"),
+                Attachment(url: "https://placekittens.com/601/400", thumbnailUrl: "https://placekittens.com/201/200")
             ],
             price: "$40"
         ),
@@ -62,7 +62,7 @@ enum MockData {
                 Hashtag(name: "BabyGear", colorHex: "#00BCD4")
             ],
             attachments: [
-                Attachment(url: "https://example.com/bouncer.jpg", thumbnailUrl: "https://example.com/bouncer_thumb.jpg")
+                Attachment(url: "https://placekittens.com/602/400", thumbnailUrl: "https://placekittens.com/202/200")
             ],
             price: nil
         ),
@@ -103,7 +103,7 @@ enum MockData {
                 Hashtag(name: "Kids", colorHex: "#FF5722")
             ],
             attachments: [
-                Attachment(url: "https://example.com/bookshelf.jpg", thumbnailUrl: "https://example.com/bookshelf_thumb.jpg")
+                Attachment(url: "https://placekittens.com/603/400", thumbnailUrl: "https://placekittens.com/203/200")
             ],
             price: "$150"
         ),
@@ -154,9 +154,9 @@ enum MockData {
                 Hashtag(name: "NorthSlope", colorHex: "#9C27B0")
             ],
             attachments: [
-                Attachment(url: "https://example.com/stroller1.jpg", thumbnailUrl: "https://example.com/stroller1_thumb.jpg"),
-                Attachment(url: "https://example.com/stroller2.jpg", thumbnailUrl: "https://example.com/stroller2_thumb.jpg"),
-                Attachment(url: "https://example.com/stroller3.jpg", thumbnailUrl: "https://example.com/stroller3_thumb.jpg")
+                Attachment(url: "https://placekittens.com/604/400", thumbnailUrl: "https://placekittens.com/204/200"),
+                Attachment(url: "https://placekittens.com/605/400", thumbnailUrl: "https://placekittens.com/205/200"),
+                Attachment(url: "https://placekittens.com/606/400", thumbnailUrl: "https://placekittens.com/206/200")
             ],
             price: "$650"
         )
