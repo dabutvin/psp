@@ -34,6 +34,7 @@
 		A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000090 /* AuthenticatedImageLoader.swift */; };
 		A10000012999999900000081 /* AuthenticatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000091 /* AuthenticatedImage.swift */; };
 		A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000092 /* String+HTMLDecoding.swift */; };
+		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +66,7 @@
 		A10000012999999900000090 /* AuthenticatedImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImageLoader.swift; sourceTree = "<group>"; };
 		A10000012999999900000091 /* AuthenticatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImage.swift; sourceTree = "<group>"; };
 		A10000012999999900000092 /* String+HTMLDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+HTMLDecoding.swift"; sourceTree = "<group>"; };
+		A100000129999999000000B1 /* PostPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPagerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,6 +131,7 @@
 				A10000012999999900000024 /* MainFeedView.swift */,
 				A10000012999999900000025 /* PostCardView.swift */,
 				A10000012999999900000026 /* PostDetailView.swift */,
+				A100000129999999000000B1 /* PostPagerView.swift */,
 				A10000012999999900000050 /* SearchView.swift */,
 				A10000012999999900000051 /* FilterSheet.swift */,
 				A10000012999999900000072 /* SavedPostsView.swift */,
@@ -287,6 +290,7 @@
 				A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */,
 				A10000012999999900000081 /* AuthenticatedImage.swift in Sources */,
 				A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */,
+				A100000129999999000000B0 /* PostPagerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

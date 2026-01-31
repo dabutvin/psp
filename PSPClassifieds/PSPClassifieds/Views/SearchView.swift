@@ -114,6 +114,7 @@ struct RecentSearchesView: View {
 // MARK: - Search Results View
 struct SearchResultsView: View {
     let viewModel: SearchViewModel
+    @State private var selectedPost: Post?
     
     var body: some View {
         Group {
@@ -130,9 +131,12 @@ struct SearchResultsView: View {
                 List {
                     Section {
                         ForEach(viewModel.results) { post in
-                            NavigationLink(value: post) {
+                            Button {
+                                selectedPost = post
+                            } label: {
                                 PostCardView(post: post)
                             }
+                            .buttonStyle(.plain)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .listRowSeparator(.hidden)
                         }
@@ -141,8 +145,8 @@ struct SearchResultsView: View {
                     }
                 }
                 .listStyle(.plain)
-                .navigationDestination(for: Post.self) { post in
-                    PostDetailView(post: post)
+                .navigationDestination(item: $selectedPost) { post in
+                    StaticPostPagerView(posts: viewModel.results, initialPost: post)
                 }
             }
         }

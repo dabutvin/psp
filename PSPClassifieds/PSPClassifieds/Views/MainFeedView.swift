@@ -167,6 +167,7 @@ struct PostsList: View {
     let viewModel: FeedViewModel
     @State private var showScrollToTop = false
     @State private var visibleIndices: Set<Int> = []
+    @State private var selectedPost: Post?
     
     private let showThreshold = 5 // Show button after scrolling past 5 posts
     
@@ -174,9 +175,12 @@ struct PostsList: View {
         ScrollViewReader { proxy in
             List {
                 ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-                    NavigationLink(value: post) {
+                    Button {
+                        selectedPost = post
+                    } label: {
                         PostCardView(post: post)
                     }
+                    .buttonStyle(.plain)
                     .id(index)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowSeparator(.hidden)
@@ -240,8 +244,8 @@ struct PostsList: View {
                     }
                 }
             }
-            .navigationDestination(for: Post.self) { post in
-                PostDetailView(post: post)
+            .navigationDestination(item: $selectedPost) { post in
+                PostPagerView(viewModel: viewModel, initialPost: post)
             }
         }
     }

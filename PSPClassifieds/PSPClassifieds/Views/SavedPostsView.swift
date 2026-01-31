@@ -5,6 +5,7 @@ struct SavedPostsView: View {
     @Environment(SavedPostsManager.self) private var savedPostsManager
     @State private var savedPosts: [Post] = []
     @State private var isLoading = true
+    @State private var selectedPost: Post?
     
     var body: some View {
         NavigationStack {
@@ -20,8 +21,8 @@ struct SavedPostsView: View {
             }
             .navigationTitle("Saved")
             .navigationBarTitleDisplayMode(.large)
-            .navigationDestination(for: Post.self) { post in
-                PostDetailView(post: post)
+            .navigationDestination(item: $selectedPost) { post in
+                StaticPostPagerView(posts: savedPosts, initialPost: post)
             }
         }
         .onAppear {
@@ -43,9 +44,12 @@ struct SavedPostsView: View {
     private var savedPostsList: some View {
         List {
             ForEach(savedPosts) { post in
-                NavigationLink(value: post) {
+                Button {
+                    selectedPost = post
+                } label: {
                     PostCardView(post: post)
                 }
+                .buttonStyle(.plain)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .listRowSeparator(.hidden)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
