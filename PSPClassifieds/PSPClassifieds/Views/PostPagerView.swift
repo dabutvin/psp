@@ -8,6 +8,7 @@ struct PostPagerView: View {
     
     @State private var selectedPostId: Int
     @Environment(SavedPostsManager.self) private var savedPostsManager
+    @Environment(\.dismiss) private var dismiss
     
     init(viewModel: FeedViewModel, initialPost: Post, lastViewedPostId: Binding<Int?>) {
         self.viewModel = viewModel
@@ -35,8 +36,10 @@ struct PostPagerView: View {
     var body: some View {
         TabView(selection: $selectedPostId) {
             ForEach(posts) { post in
-                PostDetailContent(post: post)
-                    .tag(post.id)
+                PostDetailContent(post: post) { hashtag in
+                    filterByHashtag(hashtag)
+                }
+                .tag(post.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -64,6 +67,13 @@ struct PostPagerView: View {
                 }
                 .sensoryFeedback(.impact(flexibility: .soft), trigger: savedPostsManager.isSaved(currentPost))
             }
+        }
+    }
+    
+    private func filterByHashtag(_ hashtag: Hashtag) {
+        dismiss()
+        Task {
+            await viewModel.applyFilters(hashtags: [hashtag.name], sinceDate: nil)
         }
     }
 }
@@ -126,6 +136,7 @@ struct StaticPostPagerView: View {
 /// The actual content of a post detail - extracted for use in pager
 struct PostDetailContent: View {
     let post: Post
+    var onHashtagTapped: ((Hashtag) -> Void)? = nil
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
     /// All images: attachments + inline images from body HTML (deduplicated)
@@ -196,7 +207,7 @@ struct PostDetailContent: View {
                     titleAndPrice
                     
                     // Hashtags (show all on detail view)
-                    HashtagRow(hashtags: post.hashtags, maxVisible: 100)
+                    HashtagRow(hashtags: post.hashtags, maxVisible: 100, onHashtagTapped: onHashtagTapped)
                     
                     Divider()
                     

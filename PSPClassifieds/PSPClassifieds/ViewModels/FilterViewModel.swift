@@ -37,6 +37,27 @@ class FilterViewModel {
                 return calendar.date(byAdding: .month, value: -3, to: now)
             }
         }
+        
+        /// Convert a date back to the closest matching DateRange
+        static func fromDate(_ date: Date?) -> DateRange {
+            guard let date = date else { return .all }
+            
+            let calendar = Calendar.current
+            let now = Date()
+            let daysDiff = calendar.dateComponents([.day], from: date, to: now).day ?? 0
+            
+            if daysDiff <= 1 {
+                return .today
+            } else if daysDiff <= 7 {
+                return .week
+            } else if daysDiff <= 31 {
+                return .month
+            } else if daysDiff <= 93 {
+                return .threeMonths
+            } else {
+                return .all
+            }
+        }
     }
     
     var hasActiveFilters: Bool {
@@ -88,6 +109,12 @@ class FilterViewModel {
     func clearFilters() {
         selectedHashtags = []
         dateRange = .all
+    }
+    
+    /// Sync filter state from external source (e.g., when hashtag tapped in detail view)
+    func syncFrom(hashtags: [String], sinceDate: Date?) {
+        selectedHashtags = Set(hashtags)
+        dateRange = DateRange.fromDate(sinceDate)
     }
     
     // MARK: - Filter Application

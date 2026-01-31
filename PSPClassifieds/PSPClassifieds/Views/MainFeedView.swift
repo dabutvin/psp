@@ -79,6 +79,12 @@ struct MainFeedView: View {
                     }
                 }
             }
+            .onChange(of: showFilters) { _, isShowing in
+                if isShowing {
+                    // Sync FilterViewModel with current FeedViewModel filters
+                    filterViewModel.syncFrom(hashtags: viewModel.filterHashtags, sinceDate: viewModel.filterSinceDate)
+                }
+            }
             .sheet(isPresented: $showSearch) {
                 SearchView()
             }

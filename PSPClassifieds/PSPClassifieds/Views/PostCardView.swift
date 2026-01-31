@@ -95,6 +95,7 @@ struct PlaceholderImage: View {
 struct HashtagRow: View {
     let hashtags: [Hashtag]
     var maxVisible: Int = 2
+    var onHashtagTapped: ((Hashtag) -> Void)? = nil
     
     private var visibleHashtags: [Hashtag] {
         Array(hashtags.prefix(maxVisible))
@@ -107,7 +108,10 @@ struct HashtagRow: View {
     var body: some View {
         HStack(spacing: 6) {
             ForEach(visibleHashtags) { hashtag in
-                HashtagPill(hashtag: hashtag)
+                HashtagPill(
+                    hashtag: hashtag,
+                    onTap: onHashtagTapped != nil ? { onHashtagTapped?(hashtag) } : nil
+                )
             }
             
             if remainingCount > 0 {

@@ -3,6 +3,7 @@ import SwiftUI
 struct HashtagPill: View {
     let hashtag: Hashtag
     var size: Size = .regular
+    var onTap: (() -> Void)? = nil
     
     enum Size {
         case small, regular
@@ -30,6 +31,19 @@ struct HashtagPill: View {
     }
     
     var body: some View {
+        Group {
+            if let onTap = onTap {
+                Button(action: onTap) {
+                    pillContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                pillContent
+            }
+        }
+    }
+    
+    private var pillContent: some View {
         Text("#\(hashtag.name)")
             .font(size.font)
             .fontWeight(.medium)
