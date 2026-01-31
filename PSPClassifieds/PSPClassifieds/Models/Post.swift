@@ -47,10 +47,33 @@ struct Post: Identifiable, Codable, Hashable {
     }
     
     var firstImageURL: URL? {
-        guard let urlString = attachments?.first?.thumbnailUrl ?? attachments?.first?.url else {
+        // First check attachments
+        if let urlString = attachments?.first?.thumbnailUrl ?? attachments?.first?.url {
+            return URL(string: urlString)
+        }
+        
+        // Fall back to inline images in body HTML
+        if let body = body, let inlineUrl = extractFirstInlineImage(from: body) {
+            return URL(string: inlineUrl)
+        }
+        
+        return nil
+    }
+    
+    /// Extract the first image URL from HTML img tags
+    private func extractFirstInlineImage(from html: String) -> String? {
+        let imgPattern = #"<img\s+[^>]*src\s*=\s*["']([^"']+)["'][^>]*>"#
+        guard let regex = try? NSRegularExpression(pattern: imgPattern, options: .caseInsensitive) else {
             return nil
         }
-        return URL(string: urlString)
+        
+        let nsString = html as NSString
+        guard let match = regex.firstMatch(in: html, range: NSRange(location: 0, length: nsString.length)),
+              match.numberOfRanges >= 2 else {
+            return nil
+        }
+        
+        return nsString.substring(with: match.range(at: 1))
     }
     
     var relativeTimeString: String {

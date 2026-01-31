@@ -4,12 +4,67 @@ struct PostDetailView: View {
     let post: Post
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
+    /// All images: attachments + inline images from body HTML (deduplicated)
+    private var allImages: [Attachment] {
+        var images: [Attachment] = []
+        var seenUrls = Set<String>()
+        
+        // Add attachments, deduplicating as we go
+        for attachment in post.attachments ?? [] {
+            if let url = attachment.downloadUrl, !seenUrls.contains(url) {
+                seenUrls.insert(url)
+                images.append(attachment)
+            } else if attachment.downloadUrl == nil {
+                // Keep attachments without URLs (shouldn't happen, but be safe)
+                images.append(attachment)
+            }
+        }
+        
+        // Extract inline images from body HTML
+        if let body = post.body {
+            let inlineImages = extractInlineImages(from: body)
+            for imageUrl in inlineImages {
+                // Only add if not already seen
+                if !seenUrls.contains(imageUrl) {
+                    seenUrls.insert(imageUrl)
+                    let attachment = Attachment(
+                        downloadUrl: imageUrl,
+                        thumbnailUrl: nil,
+                        filename: nil,
+                        mediaType: "image",
+                        attachmentIndex: nil
+                    )
+                    images.append(attachment)
+                }
+            }
+        }
+        
+        return images
+    }
+    
+    /// Extract image URLs from HTML img tags
+    private func extractInlineImages(from html: String) -> [String] {
+        let imgPattern = #"<img\s+[^>]*src\s*=\s*["']([^"']+)["'][^>]*>"#
+        guard let regex = try? NSRegularExpression(pattern: imgPattern, options: .caseInsensitive) else {
+            return []
+        }
+        
+        let nsString = html as NSString
+        let matches = regex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+        
+        return matches.compactMap { match in
+            guard match.numberOfRanges >= 2 else { return nil }
+            let urlRange = match.range(at: 1)
+            return nsString.substring(with: urlRange)
+        }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Image Gallery
-                if let attachments = post.attachments, !attachments.isEmpty {
-                    ImageGallery(attachments: attachments)
+                // Image Gallery (includes attachments + inline body images)
+                if !allImages.isEmpty {
+                    ImageGallery(attachments: allImages)
                 }
                 
                 VStack(alignment: .leading, spacing: 16) {
@@ -170,25 +225,98 @@ struct SkeletonGalleryImage: View {
 // MARK: - HTML Text View
 struct HTMLTextView: View {
     let html: String
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         Text(attributedString)
             .font(.body)
+            .environment(\.openURL, OpenURLAction { url in
+                openURL(url)
+                return .handled
+            })
     }
     
     private var attributedString: AttributedString {
-        let stripped = html
+        var result = AttributedString()
+        
+        // Preprocess: normalize line breaks
+        var processed = html
             .replacingOccurrences(of: "<br>", with: "\n")
             .replacingOccurrences(of: "<br/>", with: "\n")
             .replacingOccurrences(of: "<br />", with: "\n")
             .replacingOccurrences(of: "</p>", with: "\n\n")
             .replacingOccurrences(of: "</li>", with: "\n")
             .replacingOccurrences(of: "<li>", with: "• ")
-            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-            .decodingHTMLEntities()
-            .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        return AttributedString(stripped)
+        // Parse links and build attributed string
+        let linkPattern = #"<a\s+[^>]*href\s*=\s*["']([^"']+)["'][^>]*>(.*?)</a>"#
+        guard let regex = try? NSRegularExpression(pattern: linkPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+            // Fallback to plain text if regex fails
+            let stripped = processed
+                .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                .decodingHTMLEntities()
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return AttributedString(stripped)
+        }
+        
+        let nsString = processed as NSString
+        var lastEnd = 0
+        
+        let matches = regex.matches(in: processed, range: NSRange(location: 0, length: nsString.length))
+        
+        for match in matches {
+            // Add text before this link
+            if match.range.location > lastEnd {
+                let beforeRange = NSRange(location: lastEnd, length: match.range.location - lastEnd)
+                let beforeText = nsString.substring(with: beforeRange)
+                    .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                    .decodingHTMLEntities()
+                result.append(AttributedString(beforeText))
+            }
+            
+            // Extract URL and link text
+            if match.numberOfRanges >= 3,
+               let urlRange = Range(match.range(at: 1), in: processed),
+               let textRange = Range(match.range(at: 2), in: processed) {
+                let urlString = String(processed[urlRange])
+                var linkText = String(processed[textRange])
+                    .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                    .decodingHTMLEntities()
+                
+                // If link text is empty, use the URL
+                if linkText.trimmingCharacters(in: .whitespaces).isEmpty {
+                    linkText = urlString
+                }
+                
+                var linkAttrString = AttributedString(linkText)
+                if let url = URL(string: urlString) {
+                    linkAttrString.link = url
+                    linkAttrString.foregroundColor = .accentColor
+                }
+                result.append(linkAttrString)
+            }
+            
+            lastEnd = match.range.location + match.range.length
+        }
+        
+        // Add remaining text after last link
+        if lastEnd < nsString.length {
+            let remainingRange = NSRange(location: lastEnd, length: nsString.length - lastEnd)
+            let remainingText = nsString.substring(with: remainingRange)
+                .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                .decodingHTMLEntities()
+            result.append(AttributedString(remainingText))
+        }
+        
+        // Trim whitespace from final result
+        let finalString = String(result.characters).trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // If we found no links, just return the cleaned string
+        if matches.isEmpty {
+            return AttributedString(finalString)
+        }
+        
+        return result
     }
 }
 
