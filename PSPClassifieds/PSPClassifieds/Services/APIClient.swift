@@ -43,7 +43,6 @@ actor APIClient {
     // MARK: - Posts
     
     func getPosts(
-        hashtag: String? = nil,
         hashtags: [String]? = nil,
         search: String? = nil,
         since: Date? = nil,
@@ -54,14 +53,7 @@ actor APIClient {
             // Apply client-side filtering for mock data
             var filtered = MockData.posts
             
-            // Filter by category hashtag
-            if let hashtag = hashtag, !hashtag.isEmpty {
-                filtered = filtered.filter { post in
-                    post.hashtags.contains { $0.name.lowercased() == hashtag.lowercased() }
-                }
-            }
-            
-            // Filter by additional hashtags
+            // Filter by hashtags
             if let hashtags = hashtags, !hashtags.isEmpty {
                 filtered = filtered.filter { post in
                     let postHashtagNames = Set(post.hashtags.map { $0.name.lowercased() })
@@ -91,9 +83,6 @@ actor APIClient {
         var components = URLComponents(string: "\(baseURL)/messages")!
         var queryItems: [URLQueryItem] = []
         
-        if let hashtag = hashtag, !hashtag.isEmpty {
-            queryItems.append(URLQueryItem(name: "hashtag", value: hashtag))
-        }
         if let hashtags = hashtags, !hashtags.isEmpty {
             queryItems.append(URLQueryItem(name: "hashtags", value: hashtags.joined(separator: ",")))
         }

@@ -34,6 +34,15 @@ class FeedViewModel {
         await refresh()
     }
     
+    /// Combines category hashtag with filter hashtags into a single list
+    private var allHashtags: [String]? {
+        var hashtags = filterHashtags
+        if let categoryHashtag = selectedCategory.hashtag {
+            hashtags.insert(categoryHashtag, at: 0)
+        }
+        return hashtags.isEmpty ? nil : hashtags
+    }
+    
     func refresh() async {
         isRefreshing = true
         error = nil
@@ -42,8 +51,7 @@ class FeedViewModel {
         
         do {
             let response = try await api.getPosts(
-                hashtag: selectedCategory.hashtag,
-                hashtags: filterHashtags.isEmpty ? nil : filterHashtags,
+                hashtags: allHashtags,
                 since: filterSinceDate,
                 limit: 20,
                 cursor: nil
@@ -66,8 +74,7 @@ class FeedViewModel {
         
         do {
             let response = try await api.getPosts(
-                hashtag: selectedCategory.hashtag,
-                hashtags: filterHashtags.isEmpty ? nil : filterHashtags,
+                hashtags: allHashtags,
                 since: filterSinceDate,
                 limit: 20,
                 cursor: nextCursor
