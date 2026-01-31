@@ -1,0 +1,54 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A9B8C"/>
+      <stop offset="100%" style="stop-color:#2D6B5F"/>
+    </linearGradient>
+    <linearGradient id="tagGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#E8F4F1"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="20" flood-color="#1a3d35" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bgGradient)"/>
+  
+  <!-- Price Tag Shape -->
+  <g filter="url(#shadow)" transform="translate(512, 512) rotate(-45) translate(-512, -512)">
+    <path d="M280 340 
+             L280 684 
+             Q280 724 320 724 
+             L620 724
+             L744 600
+             L744 340
+             Q744 300 704 300
+             L320 300
+             Q280 300 280 340 Z" 
+          fill="url(#tagGradient)"/>
+    
+    <!-- Tag hole -->
+    <circle cx="380" cy="400" r="45" fill="url(#bgGradient)"/>
+    <circle cx="380" cy="400" r="25" fill="#FFFFFF" opacity="0.3"/>
+  </g>
+  
+  <!-- PSP Letters -->
+  <g transform="translate(512, 540)">
+    <text x="0" y="0" 
+          font-family="-apple-system, SF Pro Rounded, Helvetica Neue, sans-serif" 
+          font-size="200" 
+          font-weight="700" 
+          fill="#2D6B5F" 
+          text-anchor="middle"
+          dominant-baseline="middle">PSP</text>
+  </g>
+  
+  <!-- Decorative lines (like classified ad lines) -->
+  <g transform="translate(512, 640)" opacity="0.4">
+    <rect x="-120" y="0" width="240" height="12" rx="6" fill="#2D6B5F"/>
+    <rect x="-90" y="30" width="180" height="12" rx="6" fill="#2D6B5F"/>
+    <rect x="-60" y="60" width="120" height="12" rx="6" fill="#2D6B5F"/>
+  </g>
+</svg>
