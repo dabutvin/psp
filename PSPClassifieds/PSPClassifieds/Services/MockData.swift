@@ -33,6 +33,7 @@ enum MockData {
             """,
             snippet: "Selling a bundle of 5 pairs of gently used Adidas sneakers, all size 6 toddler...",
             senderName: "Claire Bourgeois",
+            msgNum: 725001,
             hashtags: [
                 Hashtag(name: "ForSale", colorHex: "#4CAF50", count: nil),
                 Hashtag(name: "NorthSlope", colorHex: "#9C27B0", count: nil),
@@ -76,6 +77,7 @@ enum MockData {
             """,
             snippet: "Snoo is in excellent condition! We're the second owners and everything works perfectly...",
             senderName: "Caroline Appling",
+            msgNum: 725002,
             hashtags: [
                 Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
                 Hashtag(name: "ProspectHeights", colorHex: "#93ad59", count: nil),
@@ -119,6 +121,7 @@ enum MockData {
             """,
             snippet: "Looking for a double jogging stroller, preferably Bob Revolution Duallie...",
             senderName: "Sarah Kim",
+            msgNum: 725003,
             hashtags: [
                 Hashtag(name: "ISO", colorHex: "#FF9800", count: nil),
                 Hashtag(name: "BabyGear", colorHex: "#00BCD4", count: nil)
@@ -143,6 +146,7 @@ enum MockData {
             """,
             snippet: "Selling a pair of super cozy 7AM Enfant toddler Polar Mittens...",
             senderName: "Claire Bourgeois",
+            msgNum: 725004,
             hashtags: [
                 Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
                 Hashtag(name: "Toddler", colorHex: "#89bfbd", count: nil),
@@ -173,6 +177,7 @@ enum MockData {
             """,
             snippet: "Cleaning out closets! Free bag of kids clothes, mostly size 4-5...",
             senderName: "Amy Chen",
+            msgNum: 725005,
             hashtags: [
                 Hashtag(name: "ForFree", colorHex: "#2196F3", count: nil),
                 Hashtag(name: "Kids", colorHex: "#FF5722", count: nil),
@@ -210,6 +215,7 @@ enum MockData {
             """,
             snippet: "We are ready to part with our beloved (and large!) collection of Magnatiles...",
             senderName: "Maren Ullrich",
+            msgNum: 725006,
             hashtags: [
                 Hashtag(name: "ForSale", colorHex: "#8ec2ee", count: nil),
                 Hashtag(name: "CenterSlope", colorHex: "#4191d6", count: nil),

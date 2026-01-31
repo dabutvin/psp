@@ -8,6 +8,7 @@ struct Post: Identifiable, Codable, Hashable {
     let body: String?
     let snippet: String?
     let senderName: String?
+    let msgNum: Int?
     let hashtags: [Hashtag]
     let attachments: [Attachment]?
     let price: String?
@@ -21,10 +22,17 @@ struct Post: Identifiable, Codable, Hashable {
         case body
         case snippet
         case senderName = "name"
+        case msgNum = "msg_num"
         case hashtags
         case attachments
         case price
         case isReply = "is_reply"
+    }
+    
+    /// URL to view this message on groups.io
+    var webURL: URL? {
+        guard let msgNum = msgNum else { return nil }
+        return URL(string: "https://groups.parkslopeparents.com/g/Classifieds/message/\(msgNum)")
     }
     
     var category: Category {

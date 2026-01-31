@@ -200,18 +200,19 @@ struct ActionButtons: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Email Button
+            // Reply Button - opens message on groups.io
             Button {
-                sendEmail()
+                openMessage()
             } label: {
-                Label("Email", systemImage: "envelope")
+                Label("Reply", systemImage: "arrowshape.turn.up.left")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.accentColor)
+                    .background(post.webURL != nil ? Color.accentColor : Color.gray)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .disabled(post.webURL == nil)
             
             // Save Button
             Button(action: onToggleSave) {
@@ -227,13 +228,9 @@ struct ActionButtons: View {
         .sensoryFeedback(.impact(flexibility: .soft), trigger: isSaved)
     }
     
-    private func sendEmail() {
-        let subject = "Re: \(post.subject ?? "")"
-        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        
-        if let url = URL(string: "mailto:?subject=\(encodedSubject)") {
-            UIApplication.shared.open(url)
-        }
+    private func openMessage() {
+        guard let url = post.webURL else { return }
+        UIApplication.shared.open(url)
     }
 }
 

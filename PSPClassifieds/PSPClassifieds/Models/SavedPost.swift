@@ -10,6 +10,7 @@ final class SavedPost {
     var body: String?
     var snippet: String?
     var senderName: String?
+    var msgNum: Int?
     var price: String?
     var savedAt: Date
     
@@ -27,6 +28,7 @@ final class SavedPost {
         self.body = post.body
         self.snippet = post.snippet
         self.senderName = post.senderName
+        self.msgNum = post.msgNum
         self.price = post.price
         self.savedAt = Date()
         
@@ -57,6 +59,7 @@ final class SavedPost {
             body: body,
             snippet: snippet,
             senderName: senderName,
+            msgNum: msgNum,
             hashtags: hashtags,
             attachments: attachments,
             price: price,
