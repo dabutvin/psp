@@ -16,5 +16,59 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: psp-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://psp:psp@postgres:5432/psp
+      GROUPS_IO_API_TOKEN: ${GROUPS_IO_API_TOKEN}
+      GROUPS_IO_GROUP_ID: ${GROUPS_IO_GROUP_ID:-8407}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  fetcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: psp-fetcher
+    environment:
+      DATABASE_URL: postgresql://psp:psp@postgres:5432/psp
+      GROUPS_IO_API_TOKEN: ${GROUPS_IO_API_TOKEN}
+      GROUPS_IO_GROUP_ID: ${GROUPS_IO_GROUP_ID:-8407}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["uv", "run", "python", "cli.py", "fetch", "--max=1000"]
+    profiles:
+      - fetch
+
+  backfill:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: psp-backfill
+    environment:
+      DATABASE_URL: postgresql://psp:psp@postgres:5432/psp
+      GROUPS_IO_API_TOKEN: ${GROUPS_IO_API_TOKEN}
+      GROUPS_IO_GROUP_ID: ${GROUPS_IO_GROUP_ID:-8407}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["uv", "run", "python", "cli.py", "backfill", "--delay=5"]
+    profiles:
+      - backfill
+
 volumes:
   psp_data:

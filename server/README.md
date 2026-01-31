@@ -2,7 +2,47 @@
 
 Backend server for the Park Slope Parents Classifieds app. Ingests messages from groups.io and provides a read-only API.
 
-## Setup
+## Deployment
+
+### 1. Start the Database
+
+```bash
+docker compose up -d postgres
+```
+
+### 2. Start the API Server
+
+```bash
+export GROUPS_IO_API_TOKEN=your_token_here
+docker compose up -d api
+```
+
+### 3. Run the Fetcher
+
+Pulls new messages from groups.io and exits:
+
+```bash
+docker compose run fetcher
+```
+
+
+### 4. Run Backfill
+
+Import historical messages (runs until complete or stopped):
+
+```bash
+docker compose run backfill
+```
+
+View progress:
+
+```bash
+docker logs -f psp-backfill
+```
+
+---
+
+## Local Development Setup
 
 1. **Install uv** (if you haven't already):
    ```bash
@@ -17,14 +57,13 @@ Backend server for the Park Slope Parents Classifieds app. Ingests messages from
 
 3. **Start PostgreSQL:**
    ```bash
-   docker compose up -d
+   docker compose up -d postgres
    ```
 
 4. **Configure environment:**
    ```bash
    cp env.example .env
    # Edit .env with your GROUPS_IO_API_TOKEN
-   # DATABASE_URL is pre-configured for Docker
    ```
 
 5. **Initialize database:**
@@ -32,58 +71,50 @@ Backend server for the Park Slope Parents Classifieds app. Ingests messages from
    uv run python cli.py init-db
    ```
 
-5. **Test API connection:**
+6. **Test API connection:**
    ```bash
    uv run python cli.py test-api
    ```
 
-## Commands
+7. **Start the server:**
+   ```bash
+   uv run python cli.py serve --reload
+   ```
+
+## CLI Commands
 
 ```bash
-# Initialize database schema
-uv run python cli.py init-db
-
-# Test groups.io API connectivity
-uv run python cli.py test-api
-
-# Fetch new messages until caught up
-uv run python cli.py fetch
-uv run python cli.py fetch --max=500 --dry-run  # preview without inserting
-
-# Backfill historical data (Phase 3)
-uv run python cli.py backfill --delay=5
-
-# Start API server (Phase 5)
-uv run python cli.py serve --host=0.0.0.0 --port=8000
-
-# Or use the installed script (after uv sync)
-uv run psp init-db
-uv run psp test-api
+uv run python cli.py init-db              # Initialize database schema
+uv run python cli.py test-api             # Test groups.io API connectivity
+uv run python cli.py fetch                # Fetch new messages
+uv run python cli.py backfill --delay=5   # Backfill historical data
+uv run python cli.py serve --reload       # Start API server (dev mode)
+uv run python cli.py stats                # Show system statistics
+uv run python cli.py migrate-search       # Populate search vectors
 ```
 
 ## Project Structure
 
 ```
 server/
-├── pyproject.toml   # Dependencies and project config
-├── cli.py           # Command-line interface
-├── config.py        # Configuration/settings
-├── db.py            # Database connection and schema
-├── models.py        # Pydantic data models
-├── api_client.py    # Groups.io API client
-├── fetch.py         # Fetch new messages
-├── backfill.py      # Historical backfill (Phase 3)
-├── server.py        # FastAPI server (Phase 5)
-└── routers/         # API route handlers (Phase 5)
-```
-
-## Scheduling
-
-To run fetch periodically, use cron or launchd:
-
-```bash
-# Example crontab entry (every 15 minutes)
-*/15 * * * * cd /path/to/psp/server && uv run python cli.py fetch >> /var/log/psp-fetch.log 2>&1
+├── pyproject.toml      # Dependencies and project config
+├── Dockerfile          # Container image definition
+├── docker-compose.yml  # Multi-container orchestration
+├── cli.py              # Command-line interface
+├── config.py           # Configuration/settings
+├── db.py               # Database connection and schema
+├── models.py           # Pydantic data models
+├── api_client.py       # Groups.io API client
+├── fetch.py            # Fetch new messages
+├── backfill.py         # Historical backfill
+├── server.py           # FastAPI server
+├── logging_config.py   # Structured logging
+├── stats.py            # System statistics
+├── migrations.py       # Database migrations
+└── routers/            # API route handlers
+    ├── messages.py     # /api/v1/messages
+    ├── hashtags.py     # /api/v1/hashtags
+    └── stats.py        # /api/v1/stats
 ```
 
 ## Environment Variables

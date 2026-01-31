@@ -199,59 +199,27 @@ Query params for `/messages`:
 - [x] **Compression**: GZip middleware for responses > 1KB
 - [x] **CORS**: Configured for cross-origin requests
 
-### 5.4 Derived Fields (computed on server)
-Server extracts/computes these fields so clients don't need to parse:
+### 5.4 Derived Fields (computed on server) ✓
+All derived fields implemented in `models.py` and used in API responses:
 
-- **price**: Extract from subject/body using regex
-  ```python
-  import re
-  
-  def extract_price(subject: str, body: str) -> str | None:
-      """Extract first price found in subject or body."""
-      text = f"{subject} {body}"
-      # Match patterns: $40, $40.00, asking $50, $1,000
-      patterns = [
-          r'\$[\d,]+(?:\.\d{2})?',           # $40, $40.00, $1,000
-          r'asking\s*\$?[\d,]+',              # asking $50, asking 50
-          r'[\d,]+\s*(?:dollars|obo)',        # 50 dollars, 40 obo
-      ]
-      for pattern in patterns:
-          match = re.search(pattern, text, re.IGNORECASE)
-          if match:
-              return match.group(0)
-      return None
-  ```
+- [x] **price**: `extract_price()` - Extracts `$40`, `$40.00`, `asking $50`, `40 obo` from subject/body
+- [x] **category**: `_derive_category()` - Derives `ForSale`/`ForFree`/`ISO` from hashtags
+- [x] **sender_email**: `extract_email()` - Parses from `"Name <email@example.com>"` format
 
-- **category**: Derive from hashtags (ForSale, ForFree, ISO)
-- **sender_email**: Parse from `name` field if format is "Name <email@example.com>"
-  ```python
-  import re
-  
-  def extract_email(name: str) -> str | None:
-      """Extract email from 'Display Name <email@example.com>' format."""
-      match = re.search(r'<([^>]+@[^>]+)>', name)
-      return match.group(1) if match else None
-  ```
-
-### 5.5 Image/Attachment Handling
-**Approach**: Pass through original groups.io URLs. Client handles auth via WebView cookie sharing.
-
-- API responses include original `download_url` and `thumbnail_url` from groups.io
-- Example: `https://groups.parkslopeparents.com/g/Classifieds/attachment/725415/0/IMG_1286.jpg`
-- iPhone app authenticates user via WebView login to groups.parkslopeparents.com
-- Cookies shared with URLSession, images load directly
-- No server proxy needed - reduces complexity and bandwidth
+### 5.5 Image/Attachment Handling ✓
+Pass-through approach - API returns original groups.io URLs (`download_url`, `thumbnail_url`).
+Client handles auth via WebView cookie sharing with URLSession.
 
 ### 5.6 Deployment Options
-- **Simple**: Run on a VPS (DigitalOcean, Linode) with uvicorn + nginx
-- **Serverless**: Works well with managed Postgres (Supabase, Neon, RDS)
-- **Container**: Dockerfile for easy deployment anywhere
+- **Simple**: VPS (DigitalOcean, Linode) with uvicorn + nginx
+- **Serverless**: Works with managed Postgres (Supabase, Neon, RDS)
+- **Container**: Dockerfile for easy deployment
 
 ### 5.7 Security
-- [ ] Rate limiting (slowapi or nginx)
+- [x] Rate limiting (slowapi) - 30-120 req/min per endpoint
 - [ ] Optional API key for app authentication
-- [ ] No sensitive data exposed (emails already visible in source data)
-- [ ] HTTPS only in production
+- [x] No sensitive data exposed (emails already in source)
+- [ ] HTTPS only in production (nginx/reverse proxy)
 
 ---
 
