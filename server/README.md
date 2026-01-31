@@ -4,6 +4,21 @@ Backend server for the Park Slope Parents Classifieds app. Ingests messages from
 
 ## Deployment
 
+### 1. Supabase for Postgres
+
+### 2. Fly.io for app container
+
+```
+fly secrets set DATABASE_URL="postgresql://postgres:PASSWORD@db.xxxxx.supabase.co:5432/postgres"
+fly secrets set GROUPS_IO_API_TOKEN=""
+fly deploy
+fly ssh console -C "uv run python cli.py init-db"
+fly ssh console -C "uv run python cli.py backfill --delay=5 --max=1000"
+fly ssh console -C "uv run python cli.py fetch"
+```
+
+## Docker
+
 ### 1. Start the Database
 
 ```bash
