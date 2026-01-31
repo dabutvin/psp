@@ -3,7 +3,6 @@ Fetch module for PSP server.
 Fetches new messages from groups.io until we hit one we already have.
 """
 
-import logging
 from datetime import datetime, timezone
 
 import psycopg2
@@ -11,9 +10,10 @@ from psycopg2.extras import execute_values
 
 from api_client import GroupsIOClient, RateLimitError
 from config import get_db_url
+from logging_config import get_logger
 from models import Message
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def fetch_new_messages(
@@ -47,7 +47,10 @@ def fetch_new_messages(
                 fetch_limit = min(batch_size, remaining)
 
                 # Fetch a batch of messages (newest first)
-                logger.info(f"Fetching batch of {fetch_limit} (page_token={page_token})...")
+                logger.info(
+                    f"Fetching batch of {fetch_limit}",
+                    extra={"batch_size": fetch_limit, "page_token": page_token},
+                )
                 try:
                     response = client.get_messages(
                         limit=fetch_limit,
@@ -80,7 +83,10 @@ def fetch_new_messages(
                     if not dry_run:
                         _insert_messages(cur, new_messages)
                     total_new += len(new_messages)
-                    logger.info(f"Inserted {len(new_messages)} new messages")
+                    logger.info(
+                        f"Inserted {len(new_messages)} new messages",
+                        extra={"inserted": len(new_messages), "total_new": total_new},
+                    )
 
                 # If we found any existing messages, we've caught up
                 if existing_ids:
@@ -111,7 +117,10 @@ def fetch_new_messages(
         if not dry_run:
             conn.commit()
 
-    logger.info(f"Fetch complete: {total_new} new messages from {total_fetched} checked")
+    logger.info(
+        f"Fetch complete: {total_new} new messages from {total_fetched} checked",
+        extra={"total_new": total_new, "total_checked": total_fetched},
+    )
     return total_new
 
 

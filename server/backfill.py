@@ -12,7 +12,6 @@ IMPORTANT: Be gentle with the API!
 - Resumable via backfill_page_token in sync_state
 """
 
-import logging
 import signal
 import time
 from datetime import datetime, timezone
@@ -22,9 +21,10 @@ from psycopg2.extras import execute_values
 
 from api_client import GroupsIOClient, RateLimitError
 from config import get_db_url
+from logging_config import get_logger
 from models import Message
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Global flag for graceful shutdown
 _shutdown_requested = False
@@ -98,15 +98,21 @@ def _do_backfill(
             page_token = row[0] if row else None
 
             if page_token:
-                logger.info(f"Resuming backfill from page_token={page_token}")
+                logger.info(
+                    f"Resuming backfill from page_token={page_token}",
+                    extra={"page_token": page_token, "resuming": True},
+                )
             else:
-                logger.info("Starting backfill from the beginning")
+                logger.info("Starting backfill from the beginning", extra={"resuming": False})
 
             # Get total message count for progress reporting
             try:
                 response = client.get_messages(limit=1, sort_dir="desc")
                 total_count = response.total_count
-                logger.info(f"Total messages in group: {total_count:,}")
+                logger.info(
+                    f"Total messages in group: {total_count:,}",
+                    extra={"total_in_group": total_count},
+                )
             except Exception as e:
                 logger.warning(f"Could not get total count: {e}")
                 total_count = None
@@ -127,7 +133,10 @@ def _do_backfill(
                 fetch_limit = min(batch_size, remaining)
 
                 # Fetch a batch of messages (oldest first for backfill)
-                logger.info(f"Fetching batch of {fetch_limit} (page_token={page_token})...")
+                logger.info(
+                    f"Fetching batch of {fetch_limit}",
+                    extra={"batch_size": fetch_limit, "page_token": page_token},
+                )
 
                 try:
                     response = client.get_messages(
@@ -166,21 +175,19 @@ def _do_backfill(
                     total_new += len(new_messages)
 
                 # Progress logging
-                if skipped > 0:
-                    logger.info(
-                        f"Inserted {len(new_messages)} messages, skipped {skipped} existing"
-                    )
-                else:
-                    logger.info(f"Inserted {len(new_messages)} messages")
-
-                if total_count:
-                    # Estimate progress based on page_token (message ID)
-                    oldest_in_batch = min(m.id for m in messages)
-                    newest_in_batch = max(m.id for m in messages)
-                    logger.info(
-                        f"Progress: {total_new:,} new messages, "
-                        f"ID range: {oldest_in_batch:,} - {newest_in_batch:,}"
-                    )
+                oldest_in_batch = min(m.id for m in messages)
+                newest_in_batch = max(m.id for m in messages)
+                
+                logger.info(
+                    f"Inserted {len(new_messages)} messages" + (f", skipped {skipped} existing" if skipped > 0 else ""),
+                    extra={
+                        "inserted": len(new_messages),
+                        "skipped": skipped,
+                        "total_new": total_new,
+                        "id_min": oldest_in_batch,
+                        "id_max": newest_in_batch,
+                    },
+                )
 
                 # Update backfill state (track how far back we've gone)
                 if not dry_run and response.next_page_token:
@@ -221,7 +228,8 @@ def _do_backfill(
             conn.commit()
 
     logger.info(
-        f"Backfill session complete: {total_new} new messages from {total_fetched} checked"
+        f"Backfill session complete: {total_new} new messages from {total_fetched} checked",
+        extra={"total_new": total_new, "total_checked": total_fetched, "is_complete": is_complete},
     )
     return total_new, is_complete
 

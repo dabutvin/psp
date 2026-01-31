@@ -15,6 +15,42 @@ def cmd_init_db(args):
     init_schema_sync()
 
 
+def cmd_stats(args):
+    """Show system statistics."""
+    from stats import get_system_stats, print_stats
+
+    if args.json:
+        import json
+        stats = get_system_stats()
+        print(json.dumps(stats, indent=2, default=str))
+    else:
+        stats = get_system_stats()
+        print_stats(stats)
+
+
+def cmd_migrate_search(args):
+    """Migrate search vectors for existing messages."""
+    import logging
+    from logging_config import setup_logging
+    from migrations import migrate_search_vectors, print_migration_status
+
+    if args.status:
+        print_migration_status()
+        return
+
+    setup_logging(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        json_format=args.json,
+    )
+
+    print(f"Migrating search vectors (batch_size={args.batch}, delay={args.delay}s)...")
+    count = migrate_search_vectors(
+        batch_size=args.batch,
+        delay=args.delay,
+    )
+    print(f"Done! Updated {count:,} messages.")
+
+
 def cmd_test_api(args):
     """Test API connectivity."""
     from api_client import test_connection
@@ -27,58 +63,71 @@ def cmd_test_api(args):
 def cmd_fetch(args):
     """Fetch new messages until we hit one we already have."""
     import logging
+    from logging_config import setup_logging
 
     from fetch import fetch_new_messages
 
-    logging.basicConfig(
+    setup_logging(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
+        json_format=args.json,
     )
 
-    print(f"Fetching new messages (max: {args.max})...")
+    if not args.json:
+        print(f"Fetching new messages (max: {args.max})...")
+    
     count = fetch_new_messages(
         batch_size=args.batch,
         max_messages=args.max,
         dry_run=args.dry_run,
     )
-    print(f"Done! Fetched {count} new messages.")
+    
+    if not args.json:
+        print(f"Done! Fetched {count} new messages.")
 
 
 def cmd_backfill(args):
     """Run historical backfill."""
+    import json
     import logging
+    from logging_config import setup_logging
 
     from backfill import backfill_messages, get_backfill_status, reset_backfill
 
-    logging.basicConfig(
+    setup_logging(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
+        json_format=args.json,
     )
 
     # Handle --status flag
     if args.status:
         status = get_backfill_status()
-        print("Backfill Status:")
-        print(f"  Messages in DB: {status['messages_count']:,}")
-        if status['oldest_message_id']:
-            print(f"  Message ID range: {status['oldest_message_id']:,} - {status['newest_message_id']:,}")
-        print(f"  Backfill complete: {status['is_complete']}")
-        if status['backfill_page_token']:
-            print(f"  Resume token: {status['backfill_page_token']:,}")
+        if args.json:
+            print(json.dumps(status, default=str))
+        else:
+            print("Backfill Status:")
+            print(f"  Messages in DB: {status['messages_count']:,}")
+            if status['oldest_message_id']:
+                print(f"  Message ID range: {status['oldest_message_id']:,} - {status['newest_message_id']:,}")
+            print(f"  Backfill complete: {status['is_complete']}")
+            if status['backfill_page_token']:
+                print(f"  Resume token: {status['backfill_page_token']:,}")
         return
 
     # Handle --reset flag
     if args.reset:
-        print("Resetting backfill state...")
+        if not args.json:
+            print("Resetting backfill state...")
         reset_backfill()
-        print("Done! Run 'backfill' again to start from the beginning.")
+        if not args.json:
+            print("Done! Run 'backfill' again to start from the beginning.")
         return
 
     # Run backfill
-    print(f"Starting backfill (delay: {args.delay}s between requests)...")
-    if args.max:
-        print(f"  Max messages this run: {args.max:,}")
-    print("  Press Ctrl+C to stop gracefully\n")
+    if not args.json:
+        print(f"Starting backfill (delay: {args.delay}s between requests)...")
+        if args.max:
+            print(f"  Max messages this run: {args.max:,}")
+        print("  Press Ctrl+C to stop gracefully\n")
 
     count, is_complete = backfill_messages(
         batch_size=args.batch,
@@ -87,11 +136,12 @@ def cmd_backfill(args):
         dry_run=args.dry_run,
     )
 
-    print(f"\nDone! Fetched {count:,} new messages.")
-    if is_complete:
-        print("Backfill is complete - all historical messages fetched!")
-    else:
-        print("Backfill paused - run again to continue.")
+    if not args.json:
+        print(f"\nDone! Fetched {count:,} new messages.")
+        if is_complete:
+            print("Backfill is complete - all historical messages fetched!")
+        else:
+            print("Backfill paused - run again to continue.")
 
 
 def cmd_serve(args):
@@ -117,6 +167,38 @@ def main():
     test_parser = subparsers.add_parser("test-api", help="Test API connectivity")
     test_parser.set_defaults(func=cmd_test_api)
 
+    # stats command
+    stats_parser = subparsers.add_parser(
+        "stats", help="Show system statistics"
+    )
+    stats_parser.add_argument(
+        "--json", action="store_true", help="Output as JSON"
+    )
+    stats_parser.set_defaults(func=cmd_stats)
+
+    # migrate-search command
+    migrate_parser = subparsers.add_parser(
+        "migrate-search",
+        help="Populate search vectors for existing messages",
+        description="Backfill the search_vector column for messages that don't have one.",
+    )
+    migrate_parser.add_argument(
+        "--batch", type=int, default=1000, help="Messages per batch (default: 1000)"
+    )
+    migrate_parser.add_argument(
+        "--delay", type=float, default=0.1, help="Seconds between batches (default: 0.1)"
+    )
+    migrate_parser.add_argument(
+        "--status", action="store_true", help="Show migration status and exit"
+    )
+    migrate_parser.add_argument(
+        "--json", action="store_true", help="Output logs as JSON"
+    )
+    migrate_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+    migrate_parser.set_defaults(func=cmd_migrate_search)
+
     # fetch command
     fetch_parser = subparsers.add_parser(
         "fetch", help="Fetch new messages until caught up"
@@ -129,6 +211,9 @@ def main():
     )
     fetch_parser.add_argument(
         "--dry-run", action="store_true", help="Don't insert into database"
+    )
+    fetch_parser.add_argument(
+        "--json", action="store_true", help="Output logs as JSON"
     )
     fetch_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose output"
@@ -173,6 +258,11 @@ def main():
         "--dry-run",
         action="store_true",
         help="Don't insert into database",
+    )
+    backfill_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output logs as JSON",
     )
     backfill_parser.add_argument(
         "-v", "--verbose",

@@ -120,15 +120,14 @@ CREATE TABLE sync_state (
 
 ## Phase 4: Production Hardening
 
-### 4.1 Scheduling
-- [ ] Add scheduler (cron or APScheduler) for automatic polling
-- [ ] Consider simple systemd service or similar
+### 4.1 Observability
+- [x] Structured logging (`logging_config.py` - JSON and pretty formatters)
+- [x] Simple stats: `python cli.py stats` shows messages, sync status, hashtags, database health
 
-### 4.2 Observability
-- [ ] Structured logging
-- [ ] Simple stats: messages ingested, last poll time, etc.
-
-### 4.3 Full-Text Search (PostgreSQL)
+### 4.2 Full-Text Search (PostgreSQL)
+- [x] Schema with `search_vector` column and GIN index (in `db.py`)
+- [x] Trigger to auto-populate on INSERT/UPDATE
+- [x] Migration command: `python cli.py migrate-search` to backfill existing messages
 Use PostgreSQL's built-in full-text search:
 
 ```sql
@@ -288,7 +287,7 @@ Server extracts/computes these fields so clients don't need to parse:
 psp/
 ├── .env                  # API_TOKEN, GROUP_ID (gitignored)
 ├── .gitignore
-├── requirements.txt
+├── pyproject.toml        # Dependencies and project config
 ├── config.py             # Load env vars, constants
 ├── db.py                 # Database connection, schema init
 ├── api_client.py         # groups.io API wrapper
@@ -296,7 +295,10 @@ psp/
 ├── fetch.py              # Fetch new messages
 ├── backfill.py           # Historical backfill
 ├── cli.py                # Main entry point
-├── server.py             # FastAPI read-only API
+├── logging_config.py     # Structured logging (JSON/pretty formats)
+├── stats.py              # System statistics and observability
+├── migrations.py         # Database migrations (search vector backfill)
+├── server.py             # FastAPI read-only API (Phase 5)
 ├── routers/
 │   ├── messages.py       # /api/v1/messages endpoints
 │   ├── topics.py         # /api/v1/topics endpoints
