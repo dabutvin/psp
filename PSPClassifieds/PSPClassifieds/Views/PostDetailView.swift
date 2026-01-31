@@ -106,8 +106,7 @@ struct ImageGallery: View {
         TabView(selection: $selectedIndex) {
             ForEach(Array(attachments.enumerated()), id: \.element.id) { index, attachment in
                 AuthenticatedImage(url: attachment.imageURL, contentMode: .fit) {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    SkeletonGalleryImage()
                 } errorView: { error in
                     VStack(spacing: 8) {
                         Image(systemName: errorIcon(for: error))
@@ -148,6 +147,23 @@ struct ImageGallery: View {
             }
         }
         return "Failed to load image"
+    }
+}
+
+// MARK: - Skeleton Gallery Image
+struct SkeletonGalleryImage: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .opacity(isAnimating ? 0.6 : 1.0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                }
+            }
     }
 }
 

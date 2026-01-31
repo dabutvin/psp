@@ -148,12 +148,7 @@ struct AuthenticatedThumbnail: View {
             url: url,
             contentMode: .fill
         ) {
-            Rectangle()
-                .fill(Color(.tertiarySystemBackground))
-                .overlay {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                }
+            SkeletonThumbnail()
         } errorView: { _ in
             Rectangle()
                 .fill(Color(.tertiarySystemBackground))
@@ -165,6 +160,22 @@ struct AuthenticatedThumbnail: View {
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+// MARK: - Skeleton Thumbnail
+struct SkeletonThumbnail: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .opacity(isAnimating ? 0.6 : 1.0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                }
+            }
     }
 }
 

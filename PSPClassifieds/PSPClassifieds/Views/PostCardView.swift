@@ -51,7 +51,7 @@ struct PostThumbnail: View {
             if let url = url {
                 // Use AuthenticatedImage for groups.parkslopeparents.com images
                 AuthenticatedImage(url: url, contentMode: .fill) {
-                    ProgressView()
+                    SkeletonImage()
                 } errorView: { _ in
                     PlaceholderImage()
                 }
@@ -61,6 +61,21 @@ struct PostThumbnail: View {
         }
         .frame(width: 80, height: 80)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct SkeletonImage: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .opacity(isAnimating ? 0.6 : 1.0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                }
+            }
     }
 }
 
