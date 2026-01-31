@@ -26,11 +26,20 @@ class FeedViewModel {
     
     private var nextCursor: String? = nil
     private let api = APIClient.shared
+    private let cache = FeedCache.shared
     
     // MARK: - Public Methods
     
     func loadInitialPosts() async {
         guard posts.isEmpty else { return }
+        
+        // Load cached posts immediately for instant display
+        let cached = await cache.loadCachedPosts(for: selectedCategory)
+        if !cached.isEmpty {
+            posts = cached
+        }
+        
+        // Then refresh from network
         await refresh()
     }
     
@@ -60,6 +69,11 @@ class FeedViewModel {
             posts = response.messages
             nextCursor = response.nextCursor
             hasMore = response.hasMore
+            
+            // Cache posts for instant display on next launch (only for unfiltered feeds)
+            if !hasActiveFilters {
+                await cache.cachePosts(posts, for: selectedCategory)
+            }
         } catch {
             self.error = error
         }
@@ -93,7 +107,11 @@ class FeedViewModel {
     func changeCategory(_ category: Category) async {
         guard category != selectedCategory else { return }
         selectedCategory = category
-        posts = []
+        
+        // Show cached posts immediately while refreshing
+        let cached = await cache.loadCachedPosts(for: category)
+        posts = cached
+        
         await refresh()
     }
     
