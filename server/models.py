@@ -218,7 +218,7 @@ class GroupsIOMessage(BaseModel):
                 Attachment(
                     attachment_index=i,
                     download_url=a.get("download_url"),
-                    thumbnail_url=a.get("thumbnail_url"),
+                    thumbnail_url=a.get("image_thumbnail_url"),  # API uses image_thumbnail_url
                     filename=a.get("filename"),
                     media_type=a.get("media_type"),
                 )
