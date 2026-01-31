@@ -30,7 +30,7 @@ struct PostDetailView: View {
                     if let body = post.body {
                         HTMLTextView(html: body)
                     } else if let snippet = post.snippet {
-                        Text(snippet)
+                        Text(snippet.decodingHTMLEntities())
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
@@ -70,7 +70,7 @@ struct PostDetailView: View {
     
     private var titleAndPrice: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(post.subject ?? "No Subject")
+            Text((post.subject ?? "No Subject").decodingHTMLEntities())
                 .font(.title2)
                 .fontWeight(.bold)
             
@@ -185,6 +185,7 @@ struct HTMLTextView: View {
             .replacingOccurrences(of: "</li>", with: "\n")
             .replacingOccurrences(of: "<li>", with: "• ")
             .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .decodingHTMLEntities()
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
         return AttributedString(stripped)

@@ -33,6 +33,7 @@
 		A10000012999999900000063 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000073 /* MainTabView.swift */; };
 		A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000090 /* AuthenticatedImageLoader.swift */; };
 		A10000012999999900000081 /* AuthenticatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000091 /* AuthenticatedImage.swift */; };
+		A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000092 /* String+HTMLDecoding.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +64,7 @@
 		A10000012999999900000073 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		A10000012999999900000090 /* AuthenticatedImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImageLoader.swift; sourceTree = "<group>"; };
 		A10000012999999900000091 /* AuthenticatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImage.swift; sourceTree = "<group>"; };
+		A10000012999999900000092 /* String+HTMLDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+HTMLDecoding.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +96,7 @@
 				A10000012999999900000033 /* Services */,
 				A10000012999999900000034 /* Components */,
 				A10000012999999900000035 /* Auth */,
+				A10000012999999900000037 /* Extensions */,
 				A10000012999999900000036 /* Resources */,
 			);
 			path = PSPClassifieds;
@@ -179,6 +182,14 @@
 				A10000012999999900000029 /* Assets.xcassets */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A10000012999999900000037 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				A10000012999999900000092 /* String+HTMLDecoding.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -275,6 +286,7 @@
 				A10000012999999900000063 /* MainTabView.swift in Sources */,
 				A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */,
 				A10000012999999900000081 /* AuthenticatedImage.swift in Sources */,
+				A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
