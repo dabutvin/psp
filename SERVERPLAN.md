@@ -164,9 +164,10 @@ ORDER BY ts_rank(search_vector, plainto_tsquery('english', 'baby stroller')) DES
 ## Phase 5: Read-Only API (iPhone App Backend)
 
 ### 5.1 API Framework
-- [ ] Add FastAPI to requirements (lightweight, async, auto-generates OpenAPI docs)
-- [ ] Create `server.py` - main API application
-- [ ] Read-only endpoints only (no writes from clients)
+- [x] Add FastAPI to requirements (lightweight, async, auto-generates OpenAPI docs)
+- [x] Create `server.py` - main API application with lifespan, CORS, gzip, rate limiting
+- [x] Read-only endpoints only (no writes from clients)
+- [x] CLI: `python cli.py serve --host 0.0.0.0 --port 8000 --reload`
 
 ### 5.2 API Endpoints
 

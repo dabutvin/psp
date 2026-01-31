@@ -146,10 +146,19 @@ def cmd_backfill(args):
 
 def cmd_serve(args):
     """Start the API server."""
-    print(f"API server not yet implemented (Phase 5)")
+    from server import run_server
+
+    print(f"Starting PSP API server...")
     print(f"  Host: {args.host}")
     print(f"  Port: {args.port}")
-    # TODO: Implement in Phase 5
+    print(f"  Docs: http://{args.host}:{args.port}/docs")
+    print()
+    
+    run_server(
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+    )
 
 
 def main():
@@ -275,6 +284,7 @@ def main():
     serve_parser = subparsers.add_parser("serve", help="Start API server")
     serve_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     serve_parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+    serve_parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
     serve_parser.set_defaults(func=cmd_serve)
 
     args = parser.parse_args()
