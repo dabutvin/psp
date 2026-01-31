@@ -225,7 +225,7 @@ async def list_messages(
     
     # Build and execute query
     query = f"""
-        SELECT DISTINCT m.id, m.subject, m.snippet, m.created, m.name, m.sender_email, 
+        SELECT DISTINCT m.id, m.subject, m.snippet, m.created, m.name, m.sender_email,
                m.is_reply, m.body
         FROM messages m
         {hashtag_join}

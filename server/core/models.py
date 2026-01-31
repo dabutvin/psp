@@ -159,13 +159,26 @@ def extract_price(subject: str | None, body: str | None) -> str | None:
 
 def extract_email(name: str | None) -> str | None:
     """
-    Extract email from 'Display Name <email@example.com>' format.
+    Extract email from the name field.
+    
+    Handles two formats from groups.io:
+    1. 'Display Name <email@example.com>' - extract email from brackets
+    2. 'email@example.com' - the name itself is the email
     """
     if not name:
         return None
 
+    # Try to extract email from angle brackets first
     match = re.search(r"<([^>]+@[^>]+)>", name)
-    return match.group(1) if match else None
+    if match:
+        return match.group(1)
+    
+    # Check if the name itself looks like an email address
+    name = name.strip()
+    if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", name):
+        return name
+    
+    return None
 
 
 # Groups.io API response models
