@@ -115,6 +115,8 @@ struct RecentSearchesView: View {
 struct SearchResultsView: View {
     let viewModel: SearchViewModel
     @State private var selectedPost: Post?
+    @State private var lastViewedPostId: Int?
+    @State private var startingPostId: Int?
     
     var body: some View {
         Group {
@@ -128,25 +130,39 @@ struct SearchResultsView: View {
             } else if viewModel.results.isEmpty {
                 ContentUnavailableView.search(text: viewModel.searchText)
             } else {
-                List {
-                    Section {
-                        ForEach(viewModel.results) { post in
-                            Button {
-                                selectedPost = post
-                            } label: {
-                                PostCardView(post: post)
+                ScrollViewReader { proxy in
+                    List {
+                        Section {
+                            ForEach(viewModel.results) { post in
+                                Button {
+                                    selectedPost = post
+                                } label: {
+                                    PostCardView(post: post)
+                                }
+                                .buttonStyle(.plain)
+                                .id(post.id)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowSeparator(.hidden)
                             }
-                            .buttonStyle(.plain)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .listRowSeparator(.hidden)
+                        } header: {
+                            Text("\(viewModel.results.count) result\(viewModel.results.count == 1 ? "" : "s")")
                         }
-                    } header: {
-                        Text("\(viewModel.results.count) result\(viewModel.results.count == 1 ? "" : "s")")
                     }
-                }
-                .listStyle(.plain)
-                .navigationDestination(item: $selectedPost) { post in
-                    StaticPostPagerView(posts: viewModel.results, initialPost: post)
+                    .listStyle(.plain)
+                    .navigationDestination(item: $selectedPost) { post in
+                        StaticPostPagerView(posts: viewModel.results, initialPost: post, lastViewedPostId: $lastViewedPostId)
+                    }
+                    .onChange(of: selectedPost) { oldValue, newValue in
+                        if let post = newValue {
+                            startingPostId = post.id
+                        } else if oldValue != nil, let lastId = lastViewedPostId, let startId = startingPostId {
+                            let startIndex = viewModel.results.firstIndex { $0.id == startId } ?? 0
+                            let endIndex = viewModel.results.firstIndex { $0.id == lastId } ?? 0
+                            if abs(endIndex - startIndex) > 2 {
+                                proxy.scrollTo(lastId, anchor: .center)
+                            }
+                        }
+                    }
                 }
             }
         }

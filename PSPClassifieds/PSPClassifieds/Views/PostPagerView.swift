@@ -4,13 +4,15 @@ import SwiftUI
 struct PostPagerView: View {
     let viewModel: FeedViewModel
     let initialPost: Post
+    @Binding var lastViewedPostId: Int?
     
     @State private var selectedPostId: Int
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
-    init(viewModel: FeedViewModel, initialPost: Post) {
+    init(viewModel: FeedViewModel, initialPost: Post, lastViewedPostId: Binding<Int?>) {
         self.viewModel = viewModel
         self.initialPost = initialPost
+        self._lastViewedPostId = lastViewedPostId
         self._selectedPostId = State(initialValue: initialPost.id)
     }
     
@@ -41,11 +43,15 @@ struct PostPagerView: View {
         .navigationTitle("\(currentIndex + 1)")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: selectedPostId) {
+            lastViewedPostId = selectedPostId
             if shouldLoadMore {
                 Task {
                     await viewModel.loadMore()
                 }
             }
+        }
+        .onAppear {
+            lastViewedPostId = selectedPostId
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -66,13 +72,15 @@ struct PostPagerView: View {
 struct StaticPostPagerView: View {
     let posts: [Post]
     let initialPost: Post
+    @Binding var lastViewedPostId: Int?
     
     @State private var selectedPostId: Int
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
-    init(posts: [Post], initialPost: Post) {
+    init(posts: [Post], initialPost: Post, lastViewedPostId: Binding<Int?> = .constant(nil)) {
         self.posts = posts
         self.initialPost = initialPost
+        self._lastViewedPostId = lastViewedPostId
         self._selectedPostId = State(initialValue: initialPost.id)
     }
     
@@ -94,6 +102,12 @@ struct StaticPostPagerView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .navigationTitle("\(currentIndex + 1)")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: selectedPostId) {
+            lastViewedPostId = selectedPostId
+        }
+        .onAppear {
+            lastViewedPostId = selectedPostId
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

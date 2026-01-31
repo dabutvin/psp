@@ -168,6 +168,8 @@ struct PostsList: View {
     @State private var showScrollToTop = false
     @State private var visibleIndices: Set<Int> = []
     @State private var selectedPost: Post?
+    @State private var lastViewedPostId: Int?
+    @State private var startingPostId: Int?
     
     private let showThreshold = 5 // Show button after scrolling past 5 posts
     
@@ -181,7 +183,7 @@ struct PostsList: View {
                         PostCardView(post: post)
                     }
                     .buttonStyle(.plain)
-                    .id(index)
+                    .id(post.id)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowSeparator(.hidden)
                     .onAppear {
@@ -217,7 +219,7 @@ struct PostsList: View {
                 if showScrollToTop {
                     ScrollToTopButton {
                         withAnimation(.easeInOut(duration: 0.3)) {
-                            proxy.scrollTo(0, anchor: .top)
+                            proxy.scrollTo(viewModel.posts.first?.id, anchor: .top)
                         }
                         // Immediately hide when tapped
                         showScrollToTop = false
@@ -245,7 +247,20 @@ struct PostsList: View {
                 }
             }
             .navigationDestination(item: $selectedPost) { post in
-                PostPagerView(viewModel: viewModel, initialPost: post)
+                PostPagerView(viewModel: viewModel, initialPost: post, lastViewedPostId: $lastViewedPostId)
+            }
+            .onChange(of: selectedPost) { oldValue, newValue in
+                if let post = newValue {
+                    // Entering detail view - remember starting position
+                    startingPostId = post.id
+                } else if oldValue != nil, let lastId = lastViewedPostId, let startId = startingPostId {
+                    // Returning from detail - only scroll if moved more than 2 posts
+                    let startIndex = viewModel.posts.firstIndex { $0.id == startId } ?? 0
+                    let endIndex = viewModel.posts.firstIndex { $0.id == lastId } ?? 0
+                    if abs(endIndex - startIndex) > 2 {
+                        proxy.scrollTo(lastId, anchor: .center)
+                    }
+                }
             }
         }
     }
