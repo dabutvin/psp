@@ -256,7 +256,7 @@ struct HTMLTextView: View {
                 .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
                 .decodingHTMLEntities()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-            return AttributedString(stripped)
+            return addPhoneNumberLinks(to: AttributedString(stripped))
         }
         
         let nsString = processed as NSString
@@ -313,7 +313,80 @@ struct HTMLTextView: View {
         
         // If we found no links, just return the cleaned string
         if matches.isEmpty {
-            return AttributedString(finalString)
+            return addPhoneNumberLinks(to: AttributedString(finalString))
+        }
+        
+        // Add phone number links to the result
+        return addPhoneNumberLinks(to: result)
+    }
+    
+    /// Detects phone numbers in an AttributedString and makes them clickable SMS links
+    private func addPhoneNumberLinks(to attributedString: AttributedString) -> AttributedString {
+        var result = attributedString
+        
+        // Use NSDataDetector to find phone numbers (more reliable than regex)
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.phoneNumber.rawValue) else {
+            return result
+        }
+        
+        let fullText = String(result.characters)
+        let nsString = fullText as NSString
+        let matches = detector.matches(in: fullText, range: NSRange(location: 0, length: nsString.length))
+        
+        // Process matches in reverse order to preserve indices
+        for match in matches.reversed() {
+            guard match.resultType == .phoneNumber,
+                  let phoneNumber = match.phoneNumber else {
+                continue
+            }
+            
+            // Normalize phone number for SMS URL (remove non-digit characters except +)
+            let normalized = phoneNumber.replacingOccurrences(of: "[^+0-9]", with: "", options: .regularExpression)
+            let smsURL = "sms:\(normalized)"
+            
+            guard let url = URL(string: smsURL) else {
+                continue
+            }
+            
+            // Convert NSRange to String range, then to AttributedString range
+            let nsRange = match.range
+            guard nsRange.location != NSNotFound,
+                  let stringRange = Range(nsRange, in: fullText) else {
+                continue
+            }
+            
+            // Use AttributedString's initializer that accepts String ranges
+            // We need to find the AttributedString indices that correspond to the String indices
+            let startOffset = fullText.distance(from: fullText.startIndex, to: stringRange.lowerBound)
+            let endOffset = fullText.distance(from: fullText.startIndex, to: stringRange.upperBound)
+            
+            // Find indices in AttributedString by iterating through characters
+            var currentOffset = 0
+            var startAttrIndex: AttributedString.Index?
+            var endAttrIndex: AttributedString.Index?
+            
+            for index in result.characters.indices {
+                if currentOffset == startOffset {
+                    startAttrIndex = index
+                }
+                if currentOffset == endOffset {
+                    endAttrIndex = index
+                    break
+                }
+                currentOffset += 1
+            }
+            
+            // Handle case where end is at the end of the string
+            if endAttrIndex == nil && endOffset == fullText.count {
+                endAttrIndex = result.characters.endIndex
+            }
+            
+            // Apply link attribute if we found valid indices
+            if let start = startAttrIndex, let end = endAttrIndex {
+                let attrRange = start..<end
+                result[attrRange].link = url
+                result[attrRange].foregroundColor = .accentColor
+            }
         }
         
         return result
