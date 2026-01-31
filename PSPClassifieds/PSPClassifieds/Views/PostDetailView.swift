@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PostDetailView: View {
     let post: Post
-    @State private var isSaved = false
+    @Environment(SavedPostsManager.self) private var savedPostsManager
     
     var body: some View {
         ScrollView {
@@ -14,33 +14,15 @@ struct PostDetailView: View {
                 
                 VStack(alignment: .leading, spacing: 16) {
                     // Title & Price
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(post.subject)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        if let price = post.price {
-                            Text(price)
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.green)
-                        }
-                    }
+                    titleAndPrice
                     
-                    // Hashtags
-                    HashtagRow(hashtags: post.hashtags)
+                    // Hashtags (show all on detail view)
+                    HashtagRow(hashtags: post.hashtags, maxVisible: 100)
                     
                     Divider()
                     
                     // Sender & Date
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(post.senderName, systemImage: "person.circle")
-                            .font(.subheadline)
-                        
-                        Label(post.created.formatted(date: .long, time: .shortened), systemImage: "calendar")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                    senderInfo
                     
                     Divider()
                     
@@ -50,7 +32,15 @@ struct PostDetailView: View {
                     Divider()
                     
                     // Actions
-                    ActionButtons(post: post, isSaved: $isSaved)
+                    ActionButtons(
+                        post: post,
+                        isSaved: savedPostsManager.isSaved(post),
+                        onToggleSave: {
+                            withAnimation(.spring(response: 0.3)) {
+                                savedPostsManager.toggleSaved(post)
+                            }
+                        }
+                    )
                 }
                 .padding(.horizontal, 20)
             }
@@ -58,6 +48,44 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    withAnimation(.spring(response: 0.3)) {
+                        savedPostsManager.toggleSaved(post)
+                    }
+                } label: {
+                    Image(systemName: savedPostsManager.isSaved(post) ? "bookmark.fill" : "bookmark")
+                }
+                .sensoryFeedback(.impact(flexibility: .soft), trigger: savedPostsManager.isSaved(post))
+            }
+        }
+    }
+    
+    private var titleAndPrice: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(post.subject)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            if let price = post.price {
+                Text(price)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.green)
+            }
+        }
+    }
+    
+    private var senderInfo: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(post.senderName, systemImage: "person.circle")
+                .font(.subheadline)
+            
+            Label(post.created.formatted(date: .long, time: .shortened), systemImage: "calendar")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 
@@ -110,8 +138,6 @@ struct HTMLTextView: View {
     }
     
     private var attributedString: AttributedString {
-        // Simple HTML to AttributedString conversion
-        // Strip HTML tags for basic display
         let stripped = html
             .replacingOccurrences(of: "<br>", with: "\n")
             .replacingOccurrences(of: "<br/>", with: "\n")
@@ -129,7 +155,8 @@ struct HTMLTextView: View {
 // MARK: - Action Buttons
 struct ActionButtons: View {
     let post: Post
-    @Binding var isSaved: Bool
+    let isSaved: Bool
+    let onToggleSave: () -> Void
     
     var body: some View {
         HStack(spacing: 16) {
@@ -147,11 +174,7 @@ struct ActionButtons: View {
             }
             
             // Save Button
-            Button {
-                withAnimation(.spring(response: 0.3)) {
-                    isSaved.toggle()
-                }
-            } label: {
+            Button(action: onToggleSave) {
                 Label(isSaved ? "Saved" : "Save", systemImage: isSaved ? "bookmark.fill" : "bookmark")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -165,9 +188,6 @@ struct ActionButtons: View {
     }
     
     private func sendEmail() {
-        // Create mailto URL
-        // In a real app, we'd extract the sender's email from the API
-        // For now, this is a placeholder
         let subject = "Re: \(post.subject)"
         let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         
@@ -181,4 +201,5 @@ struct ActionButtons: View {
     NavigationStack {
         PostDetailView(post: MockData.posts[0])
     }
+    .environment(SavedPostsManager())
 }

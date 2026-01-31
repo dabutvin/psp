@@ -27,6 +27,10 @@
 		A10000012999999900000041 /* FilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000051 /* FilterSheet.swift */; };
 		A10000012999999900000042 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000052 /* SearchViewModel.swift */; };
 		A10000012999999900000043 /* FilterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000053 /* FilterViewModel.swift */; };
+		A10000012999999900000060 /* SavedPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000070 /* SavedPost.swift */; };
+		A10000012999999900000061 /* SavedPostsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000071 /* SavedPostsManager.swift */; };
+		A10000012999999900000062 /* SavedPostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000072 /* SavedPostsView.swift */; };
+		A10000012999999900000063 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000073 /* MainTabView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +55,10 @@
 		A10000012999999900000051 /* FilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterSheet.swift; sourceTree = "<group>"; };
 		A10000012999999900000052 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
 		A10000012999999900000053 /* FilterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterViewModel.swift; sourceTree = "<group>"; };
+		A10000012999999900000070 /* SavedPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPost.swift; sourceTree = "<group>"; };
+		A10000012999999900000071 /* SavedPostsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPostsManager.swift; sourceTree = "<group>"; };
+		A10000012999999900000072 /* SavedPostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPostsView.swift; sourceTree = "<group>"; };
+		A10000012999999900000073 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +110,7 @@
 				A1000001299999990000001C /* Hashtag.swift */,
 				A1000001299999990000001D /* Attachment.swift */,
 				A1000001299999990000001E /* Category.swift */,
+				A10000012999999900000070 /* SavedPost.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -109,11 +118,13 @@
 		A10000012999999900000031 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A10000012999999900000073 /* MainTabView.swift */,
 				A10000012999999900000024 /* MainFeedView.swift */,
 				A10000012999999900000025 /* PostCardView.swift */,
 				A10000012999999900000026 /* PostDetailView.swift */,
 				A10000012999999900000050 /* SearchView.swift */,
 				A10000012999999900000051 /* FilterSheet.swift */,
+				A10000012999999900000072 /* SavedPostsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -133,6 +144,7 @@
 			children = (
 				A1000001299999990000001F /* APIClient.swift */,
 				A10000012999999900000020 /* MockData.swift */,
+				A10000012999999900000071 /* SavedPostsManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -251,6 +263,10 @@
 				A10000012999999900000041 /* FilterSheet.swift in Sources */,
 				A10000012999999900000042 /* SearchViewModel.swift in Sources */,
 				A10000012999999900000043 /* FilterViewModel.swift in Sources */,
+				A10000012999999900000060 /* SavedPost.swift in Sources */,
+				A10000012999999900000061 /* SavedPostsManager.swift in Sources */,
+				A10000012999999900000062 /* SavedPostsView.swift in Sources */,
+				A10000012999999900000063 /* MainTabView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

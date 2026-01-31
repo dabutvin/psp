@@ -87,13 +87,27 @@ struct PlaceholderImage: View {
 // MARK: - Hashtag Row
 struct HashtagRow: View {
     let hashtags: [Hashtag]
+    var maxVisible: Int = 2
+    
+    private var visibleHashtags: [Hashtag] {
+        Array(hashtags.prefix(maxVisible))
+    }
+    
+    private var remainingCount: Int {
+        max(0, hashtags.count - maxVisible)
+    }
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(hashtags.prefix(4)) { hashtag in
-                    HashtagPill(hashtag: hashtag)
-                }
+        HStack(spacing: 6) {
+            ForEach(visibleHashtags) { hashtag in
+                HashtagPill(hashtag: hashtag)
+            }
+            
+            if remainingCount > 0 {
+                Text("+\(remainingCount)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
             }
         }
     }
