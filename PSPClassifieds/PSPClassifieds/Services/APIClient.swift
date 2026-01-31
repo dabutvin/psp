@@ -37,7 +37,39 @@ actor APIClient {
         self.session = URLSession(configuration: config)
         
         self.decoder = JSONDecoder()
-        self.decoder.dateDecodingStrategy = .iso8601
+        self.decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            
+            // Try ISO8601 with fractional seconds first (most common from Python/FastAPI)
+            let formatterWithFractional = ISO8601DateFormatter()
+            formatterWithFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = formatterWithFractional.date(from: dateString) {
+                return date
+            }
+            
+            // Try standard ISO8601 without fractional seconds
+            let formatterStandard = ISO8601DateFormatter()
+            formatterStandard.formatOptions = [.withInternetDateTime]
+            if let date = formatterStandard.date(from: dateString) {
+                return date
+            }
+            
+            // Fallback: try DateFormatter for other common formats
+            let fallbackFormatter = DateFormatter()
+            fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
+            fallbackFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            if let date = fallbackFormatter.date(from: dateString) {
+                return date
+            }
+            
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Cannot decode date: \(dateString)"
+                )
+            )
+        }
     }
     
     // MARK: - Posts
@@ -64,14 +96,17 @@ actor APIClient {
             
             // Filter by date
             if let since = since {
-                filtered = filtered.filter { $0.created >= since }
+                filtered = filtered.filter { post in
+                    guard let created = post.created else { return false }
+                    return created >= since
+                }
             }
             
             // Filter by search
             if let search = search, !search.isEmpty {
                 let query = search.lowercased()
                 filtered = filtered.filter { post in
-                    post.subject.lowercased().contains(query) ||
+                    (post.subject?.lowercased().contains(query) ?? false) ||
                     (post.body?.lowercased().contains(query) ?? false) ||
                     (post.senderName?.lowercased().contains(query) ?? false)
                 }

@@ -225,11 +225,19 @@ struct PostsList: View {
             }
             .overlay {
                 if viewModel.posts.isEmpty && !viewModel.isLoading && !viewModel.isRefreshing {
-                    ContentUnavailableView(
-                        "No Posts",
-                        systemImage: "tray",
-                        description: Text("No posts found in this category")
-                    )
+                    if let error = viewModel.error {
+                        ContentUnavailableView(
+                            "Unable to Load Posts",
+                            systemImage: "wifi.exclamationmark",
+                            description: Text(error.localizedDescription)
+                        )
+                    } else {
+                        ContentUnavailableView(
+                            "No Posts",
+                            systemImage: "tray",
+                            description: Text("No posts found in this category")
+                        )
+                    }
                 }
             }
             .navigationDestination(for: Post.self) { post in
