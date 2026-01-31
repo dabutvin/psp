@@ -158,7 +158,7 @@ async def list_messages(
     limit: Annotated[int, Query(ge=1, le=100, description="Number of messages to return")] = 20,
     cursor: Annotated[str | None, Query(description="Pagination cursor (message ID)")] = None,
     since: Annotated[datetime | None, Query(description="Return messages after this date")] = None,
-    hashtag: Annotated[str | None, Query(description="Filter by hashtag (ForSale, ForFree, ISO)")] = None,
+    hashtags: Annotated[str | None, Query(description="Filter by hashtags (comma-separated)")] = None,
     search: Annotated[str | None, Query(description="Full-text search query")] = None,
     if_none_match: Annotated[str | None, Header()] = None,
 ):
@@ -169,7 +169,7 @@ async def list_messages(
     Pass the `next_cursor` from the response to get the next page.
     
     **Filtering**:
-    - `hashtag`: Filter by category (ForSale, ForFree, ISO, etc.)
+    - `hashtags`: Filter by hashtags (comma-separated, returns posts matching ANY)
     - `search`: Full-text search in subject and body
     - `since`: Only messages created after this timestamp
     
@@ -198,13 +198,15 @@ async def list_messages(
         params.append(since)
         param_idx += 1
     
-    # Filter by hashtag (requires join)
+    # Filter by hashtags (comma-separated, OR logic)
     hashtag_join = ""
-    if hashtag:
-        hashtag_join = "JOIN hashtags h ON h.message_id = m.id"
-        conditions.append(f"LOWER(h.name) = LOWER(${param_idx})")
-        params.append(hashtag)
-        param_idx += 1
+    if hashtags:
+        hashtag_list = [h.strip().lower() for h in hashtags.split(",") if h.strip()]
+        if hashtag_list:
+            hashtag_join = "JOIN hashtags h ON h.message_id = m.id"
+            conditions.append(f"LOWER(h.name) = ANY(${param_idx})")
+            params.append(hashtag_list)
+            param_idx += 1
     
     # Full-text search
     if search:
@@ -269,7 +271,7 @@ async def list_messages(
     
     # Generate ETag based on first message ID and query params
     if messages:
-        etag = _generate_etag(messages[0].id, cursor, hashtag, search, limit)
+        etag = _generate_etag(messages[0].id, cursor, hashtags, search, limit)
         
         # Check if client has current version
         if _check_etag(if_none_match, etag):
@@ -285,7 +287,7 @@ async def list_messages(
         extra={
             "count": len(messages),
             "has_more": has_more,
-            "hashtag": hashtag,
+            "hashtags": hashtags,
             "search": search is not None,
         },
     )
