@@ -46,8 +46,9 @@ uv run python cli.py init-db
 # Test groups.io API connectivity
 uv run python cli.py test-api
 
-# Poll for new messages (Phase 2)
-uv run python cli.py poll
+# Fetch new messages until caught up
+uv run python cli.py fetch
+uv run python cli.py fetch --max=500 --dry-run  # preview without inserting
 
 # Backfill historical data (Phase 3)
 uv run python cli.py backfill --delay=5
@@ -70,10 +71,19 @@ server/
 ├── db.py            # Database connection and schema
 ├── models.py        # Pydantic data models
 ├── api_client.py    # Groups.io API client
-├── poller.py        # Live polling (Phase 2)
+├── fetch.py         # Fetch new messages
 ├── backfill.py      # Historical backfill (Phase 3)
 ├── server.py        # FastAPI server (Phase 5)
 └── routers/         # API route handlers (Phase 5)
+```
+
+## Scheduling
+
+To run fetch periodically, use cron or launchd:
+
+```bash
+# Example crontab entry (every 15 minutes)
+*/15 * * * * cd /path/to/psp/server && uv run python cli.py fetch >> /var/log/psp-fetch.log 2>&1
 ```
 
 ## Environment Variables
@@ -83,5 +93,4 @@ server/
 | `GROUPS_IO_API_TOKEN` | API token for groups.io | Required |
 | `GROUPS_IO_GROUP_ID` | Group ID for PSP Classifieds | 8407 |
 | `DATABASE_URL` | PostgreSQL connection string | Required |
-| `POLL_INTERVAL_MINUTES` | How often to poll for new messages | 15 |
 | `BACKFILL_DELAY_SECONDS` | Delay between backfill requests | 5 |

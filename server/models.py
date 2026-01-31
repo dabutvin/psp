@@ -107,7 +107,7 @@ class SyncState(BaseModel):
     """Sync state for tracking polling/backfill progress."""
 
     id: int = 1
-    last_poll_at: datetime | None = None
+    last_fetch_at: datetime | None = None
     newest_message_id: int | None = None
     oldest_message_id: int | None = None
     backfill_page_token: int | None = None

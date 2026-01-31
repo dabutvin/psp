@@ -69,7 +69,7 @@ CREATE INDEX idx_attachments_message_id ON attachments(message_id);
 
 CREATE TABLE sync_state (
     id INTEGER PRIMARY KEY DEFAULT 1,
-    last_poll_at TIMESTAMPTZ,
+    last_fetch_at TIMESTAMPTZ,
     newest_message_id BIGINT,
     oldest_message_id BIGINT,
     backfill_page_token BIGINT           -- for resumable backfill
@@ -83,19 +83,19 @@ CREATE TABLE sync_state (
   - Error handling
 - [ ] Test connectivity with a single API call
 
-## Phase 2: Live Polling (New Messages)
+## Phase 2: Fetch New Messages
 
-### 2.1 Polling Strategy
-- Poll for new messages using `sort_dir=desc` (newest first)
-- Check every N minutes (configurable, start with 15-30 min)
+### 2.1 Fetch Strategy
+- Fetch new messages using `sort_dir=desc` (newest first)
 - Stop when we see a message ID we already have
 - Store `newest_message_id` in sync_state
+- Run externally via cron/launchd (every 15-30 min)
 
-### 2.2 Polling Implementation
-- [ ] Create `poller.py` module
-- [ ] Implement deduplication (skip messages already in DB)
-- [ ] Log polling activity
-- [ ] Simple CLI to run: `python poll.py`
+### 2.2 Fetch Implementation
+- [x] Create `fetch.py` module
+- [x] Implement deduplication (skip messages already in DB)
+- [x] Log fetch activity
+- [x] CLI: `python cli.py fetch`
 
 ## Phase 3: Backfill (Historical Data)
 
@@ -289,7 +289,7 @@ psp/
 ├── db.py                 # Database connection, schema init
 ├── api_client.py         # groups.io API wrapper
 ├── models.py             # Data classes for messages
-├── poller.py             # Live polling logic
+├── fetch.py              # Fetch new messages
 ├── backfill.py           # Historical backfill
 ├── cli.py                # Main entry point
 ├── server.py             # FastAPI read-only API

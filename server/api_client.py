@@ -78,6 +78,7 @@ class GroupsIOClient:
         limit: int = 100,
         page_token: int | None = None,
         sort_dir: Literal["asc", "desc"] = "desc",
+        sort_field: str = "id",
     ) -> GroupsIOResponse:
         """
         Fetch messages from the groups.io API.
@@ -86,6 +87,7 @@ class GroupsIOClient:
             limit: Number of messages to fetch (max 100)
             page_token: Pagination token from previous response
             sort_dir: Sort direction - "desc" for newest first, "asc" for oldest first
+            sort_field: Field to sort by (default: "id")
 
         Returns:
             GroupsIOResponse with messages and pagination info
@@ -94,6 +96,7 @@ class GroupsIOClient:
             "group_id": self.group_id,
             "limit": min(limit, 100),  # API max is 100
             "sort_dir": sort_dir,
+            "sort_field": sort_field,
         }
 
         if page_token is not None:

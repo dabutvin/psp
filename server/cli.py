@@ -24,10 +24,24 @@ def cmd_test_api(args):
     sys.exit(0 if success else 1)
 
 
-def cmd_poll(args):
-    """Run the polling loop for new messages."""
-    print("Polling not yet implemented (Phase 2)")
-    # TODO: Implement in Phase 2
+def cmd_fetch(args):
+    """Fetch new messages until we hit one we already have."""
+    import logging
+
+    from fetch import fetch_new_messages
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
+
+    print(f"Fetching new messages (max: {args.max})...")
+    count = fetch_new_messages(
+        batch_size=args.batch,
+        max_messages=args.max,
+        dry_run=args.dry_run,
+    )
+    print(f"Done! Fetched {count} new messages.")
 
 
 def cmd_backfill(args):
@@ -60,9 +74,23 @@ def main():
     test_parser = subparsers.add_parser("test-api", help="Test API connectivity")
     test_parser.set_defaults(func=cmd_test_api)
 
-    # poll command
-    poll_parser = subparsers.add_parser("poll", help="Poll for new messages")
-    poll_parser.set_defaults(func=cmd_poll)
+    # fetch command
+    fetch_parser = subparsers.add_parser(
+        "fetch", help="Fetch new messages until caught up"
+    )
+    fetch_parser.add_argument(
+        "--batch", type=int, default=100, help="Messages per API call (default: 100)"
+    )
+    fetch_parser.add_argument(
+        "--max", type=int, default=1000, help="Max messages to fetch (default: 1000)"
+    )
+    fetch_parser.add_argument(
+        "--dry-run", action="store_true", help="Don't insert into database"
+    )
+    fetch_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+    fetch_parser.set_defaults(func=cmd_fetch)
 
     # backfill command
     backfill_parser = subparsers.add_parser("backfill", help="Backfill historical data")

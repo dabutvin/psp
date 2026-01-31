@@ -20,9 +20,6 @@ class Settings(BaseSettings):
     # Database
     database_url: str
 
-    # Polling
-    poll_interval_minutes: int = 15
-
     # Backfill
     backfill_delay_seconds: int = 5
 

@@ -67,7 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments(message_id)
 -- Sync state table (singleton row)
 CREATE TABLE IF NOT EXISTS sync_state (
     id INTEGER PRIMARY KEY DEFAULT 1,
-    last_poll_at TIMESTAMPTZ,
+    last_fetch_at TIMESTAMPTZ,
     newest_message_id BIGINT,
     oldest_message_id BIGINT,
     backfill_page_token BIGINT           -- for resumable backfill
