@@ -9,12 +9,56 @@ Backend server for the Park Slope Parents Classifieds app. Ingests messages from
 ### 2. Fly.io for app container
 
 ```
+# deploy app
 fly secrets set DATABASE_URL="postgresql://postgres:PASSWORD@db.xxxxx.supabase.co:5432/postgres"
 fly secrets set GROUPS_IO_API_TOKEN=""
 fly deploy
+
+# deploy fetcher
+fly secrets set -a psp-fetcher DATABASE_URL="postgresql://postgres:PASSWORD@db.xxxxx.supabase.co:5432/postgres"
+fly secrets set -a psp-fetcher GROUPS_IO_API_TOKEN=""
+fly deploy -c fly.fetcher.toml
+
+# set schedule for the fetch
+fly machine update <MACHINE_ID> --schedule "hourly" -a psp-fetcher
+
+```
+
+
+### 3. Logs
+
+```
+# API logs
+fly logs -a psp-api
+
+# Fetcher logs  
+fly logs -a psp-fetcher
+
+# Check fetcher status/schedule
+fly machines list -a psp-fetcher
+
+
+
+```
+
+### 4. Troubleshooting
+
+```
+# Check stats
+fly ssh console -a psp-api -C "uv run python cli.py stats"
+
+# manual run commands
 fly ssh console -C "uv run python cli.py init-db"
 fly ssh console -C "uv run python cli.py backfill --delay=5 --max=1000"
 fly ssh console -C "uv run python cli.py fetch"
+
+# list machines
+fly machines list
+fly machines list -a psp-fetcher  
+
+# change scale count
+fly scale count 1
+fly scale count 1 -a psp-fetcher 
 ```
 
 ## Docker

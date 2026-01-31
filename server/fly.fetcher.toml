@@ -1,0 +1,24 @@
+# Fly.io configuration for PSP Fetcher (scheduled job)
+# Deploy with: fly deploy -c fly.fetcher.toml
+
+app = 'psp-fetcher'
+primary_region = 'ewr'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  GROUPS_IO_GROUP_ID = '8407'
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[deploy]
+  strategy = 'immediate'
+
+# Override command - runs fetch and exits
+[experimental]
+  cmd = ["uv", "run", "python", "cli.py", "fetch", "--max=1000"]
+  auto_rollback = false
