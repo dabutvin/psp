@@ -36,7 +36,7 @@ jobs:
 
   ios-build-and-test:
     name: iOS — Build & Test
-    runs-on: macos-15
+    runs-on: macos-14
     defaults:
       run:
         working-directory: PSPClassifieds
@@ -44,13 +44,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
 
       - name: Build and run tests
         run: |
           xcodebuild test \
             -project PSPClassifieds.xcodeproj \
             -scheme PSPClassifieds \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO
