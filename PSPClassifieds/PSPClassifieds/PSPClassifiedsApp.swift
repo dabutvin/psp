@@ -6,6 +6,11 @@ struct PSPClassifiedsApp: App {
     @StateObject private var authManager = AuthManager()
     @State private var savedPostsManager = SavedPostsManager()
     
+    init() {
+        // Register background fetch task early in app lifecycle
+        BackgroundFetchManager.shared.registerBackgroundTask()
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             SavedPost.self
@@ -30,6 +35,8 @@ struct PSPClassifiedsApp: App {
                 .modelContainer(sharedModelContainer)
                 .onAppear {
                     savedPostsManager.configure(with: sharedModelContainer.mainContext)
+                    // Schedule background refresh when app becomes active
+                    BackgroundFetchManager.shared.scheduleAppRefresh()
                 }
         }
     }

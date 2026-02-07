@@ -36,6 +36,7 @@
 		A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000092 /* String+HTMLDecoding.swift */; };
 		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 		A100000129999999000000C0 /* FeedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000C1 /* FeedCache.swift */; };
+		A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000D1 /* BackgroundFetchManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +70,8 @@
 		A10000012999999900000092 /* String+HTMLDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+HTMLDecoding.swift"; sourceTree = "<group>"; };
 		A100000129999999000000B1 /* PostPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPagerView.swift; sourceTree = "<group>"; };
 		A100000129999999000000C1 /* FeedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedCache.swift; sourceTree = "<group>"; };
+		A100000129999999000000D1 /* BackgroundFetchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFetchManager.swift; sourceTree = "<group>"; };
+		A100000129999999000000D2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000001299999990000001A /* PSPClassifiedsApp.swift */,
+				A100000129999999000000D2 /* Info.plist */,
 				A10000012999999900000030 /* Models */,
 				A10000012999999900000031 /* Views */,
 				A10000012999999900000032 /* ViewModels */,
@@ -159,6 +163,7 @@
 				A10000012999999900000071 /* SavedPostsManager.swift */,
 				A10000012999999900000090 /* AuthenticatedImageLoader.swift */,
 				A100000129999999000000C1 /* FeedCache.swift */,
+				A100000129999999000000D1 /* BackgroundFetchManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -295,6 +300,7 @@
 				A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */,
 				A100000129999999000000B0 /* PostPagerView.swift in Sources */,
 				A100000129999999000000C0 /* FeedCache.swift in Sources */,
+				A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -431,6 +437,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PSPClassifieds/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PSP Classifieds";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -460,6 +467,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PSPClassifieds/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "PSP Classifieds";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
