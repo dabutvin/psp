@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SearchView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool
     @State private var viewModel = SearchViewModel()
     @FocusState private var isSearchFocused: Bool
     
@@ -9,30 +9,48 @@ struct SearchView: View {
         NavigationStack {
             Group {
                 if viewModel.hasSearched {
-                    // Search Results
                     SearchResultsView(viewModel: viewModel)
                 } else {
-                    // Recent Searches
                     RecentSearchesView(viewModel: viewModel)
                 }
             }
-            .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(
-                text: $viewModel.searchText,
-                isPresented: .constant(true),
-                prompt: "Search posts..."
-            )
-            .onSubmit(of: .search) {
-                Task {
-                    await viewModel.search()
-                }
-            }
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("Search posts...", text: $viewModel.searchText)
+                            .focused($isSearchFocused)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                Task {
+                                    await viewModel.search()
+                                }
+                            }
+                        
+                        if !viewModel.searchText.isEmpty {
+                            Button {
+                                viewModel.searchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
+                    .padding(8)
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.top, 8)
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                    .padding(.top, 8)
                 }
             }
         }
@@ -170,5 +188,5 @@ struct SearchResultsView: View {
 }
 
 #Preview("Empty") {
-    SearchView()
+    SearchView(isPresented: .constant(true))
 }

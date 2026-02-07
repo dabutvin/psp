@@ -95,7 +95,7 @@ struct MainFeedView: View {
                 }
             }
             .sheet(isPresented: $showSearch) {
-                SearchView()
+                SearchView(isPresented: $showSearch)
             }
         }
         .task {
