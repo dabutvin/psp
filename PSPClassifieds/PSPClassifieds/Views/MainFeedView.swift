@@ -1,10 +1,16 @@
 import SwiftUI
 
 struct MainFeedView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel = FeedViewModel()
     @State private var filterViewModel = FilterViewModel()
     @State private var showSearch = false
     @State private var showFilters = false
+    @State private var backgroundedAt: Date?
+    @State private var shouldScrollToTopOnReturn = false
+    
+    /// Time in background before triggering auto-refresh (10 minutes)
+    private let backgroundThreshold: TimeInterval = 10 * 60
     
     var body: some View {
         NavigationStack {
@@ -36,7 +42,7 @@ struct MainFeedView: View {
                 }
                 
                 // Posts List
-                PostsList(viewModel: viewModel)
+                PostsList(viewModel: viewModel, shouldScrollToTopAndRefresh: $shouldScrollToTopOnReturn)
             }
             .navigationTitle("PSP Classifieds")
             .navigationBarTitleDisplayMode(.inline)
@@ -94,6 +100,24 @@ struct MainFeedView: View {
         }
         .task {
             await viewModel.loadInitialPosts()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            switch newPhase {
+            case .background:
+                // Record when app went to background
+                backgroundedAt = Date()
+            case .active:
+                // Check if we've been in background long enough to warrant a refresh
+                if let backgrounded = backgroundedAt {
+                    let timeInBackground = Date().timeIntervalSince(backgrounded)
+                    if timeInBackground >= backgroundThreshold {
+                        shouldScrollToTopOnReturn = true
+                    }
+                    backgroundedAt = nil
+                }
+            default:
+                break
+            }
         }
     }
 }
@@ -203,6 +227,7 @@ struct FilterChip: View {
 // MARK: - Posts List
 struct PostsList: View {
     let viewModel: FeedViewModel
+    @Binding var shouldScrollToTopAndRefresh: Bool
     @State private var showScrollToTop = false
     @State private var visibleIndices: Set<Int> = []
     @State private var selectedPost: Post?
@@ -320,6 +345,21 @@ struct PostsList: View {
                     if abs(endIndex - startIndex) > 2 {
                         proxy.scrollTo(lastId, anchor: .center)
                     }
+                }
+            }
+            .onChange(of: shouldScrollToTopAndRefresh) { _, shouldRefresh in
+                if shouldRefresh {
+                    // Scroll to top
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo(viewModel.posts.first?.id, anchor: .top)
+                    }
+                    showScrollToTop = false
+                    // Refresh feed from API
+                    Task {
+                        await viewModel.refresh()
+                    }
+                    // Reset the flag
+                    shouldScrollToTopAndRefresh = false
                 }
             }
         }
