@@ -4,10 +4,12 @@ on:
   pull_request:
     paths:
       - "server/**"
+      - "PSPClassifieds/**"
 
 jobs:
-  test:
-    name: Run Tests
+  server-test:
+    name: Server — Tests
+    if: contains(join(github.event.pull_request.labels.*.name, ','), '') || true
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,11 +25,32 @@ jobs:
       - name: Run tests
         run: uv run pytest tests/ -v
 
-  docker-build:
-    name: Build Docker Image
+  server-docker:
+    name: Server — Docker Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Build image
         run: docker build -t psp-api:ci ./server
+
+  ios-build-and-test:
+    name: iOS — Build & Test
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: PSPClassifieds
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+
+      - name: Build and run tests
+        run: |
+          xcodebuild test \
+            -project PSPClassifieds.xcodeproj \
+            -scheme PSPClassifieds \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
