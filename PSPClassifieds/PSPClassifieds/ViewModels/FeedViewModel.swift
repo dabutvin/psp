@@ -14,6 +14,16 @@ class FeedViewModel {
     var filterHashtags: [String] = []
     var filterSinceDate: Date? = nil
     
+    // Refresh throttling
+    private(set) var lastRefreshTime: Date? = nil
+    private let refreshCooldown: TimeInterval = 30 // seconds
+    
+    /// Returns true if the feed was refreshed recently (within cooldown period)
+    var isRecentlyRefreshed: Bool {
+        guard let lastRefresh = lastRefreshTime else { return false }
+        return Date().timeIntervalSince(lastRefresh) < refreshCooldown
+    }
+    
     var hasActiveFilters: Bool {
         !filterHashtags.isEmpty || filterSinceDate != nil
     }
@@ -74,6 +84,8 @@ class FeedViewModel {
             if !hasActiveFilters {
                 await cache.cachePosts(posts, for: selectedCategory)
             }
+            
+            lastRefreshTime = Date()
         } catch {
             self.error = error
         }

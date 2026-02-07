@@ -208,6 +208,7 @@ struct PostsList: View {
     @State private var selectedPost: Post?
     @State private var lastViewedPostId: Int?
     @State private var startingPostId: Int?
+    @State private var showCaughtUpMessage = false
     
     private let showThreshold = 5 // Show button after scrolling past 5 posts
     
@@ -251,8 +252,25 @@ struct PostsList: View {
             }
             .listStyle(.plain)
             .refreshable {
-                await viewModel.refresh()
+                if viewModel.isRecentlyRefreshed {
+                    // Show "caught up" message instead of refreshing
+                    showCaughtUpMessage = true
+                    // Auto-hide after 2 seconds
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        showCaughtUpMessage = false
+                    }
+                } else {
+                    await viewModel.refresh()
+                }
             }
+            .overlay(alignment: .top) {
+                if showCaughtUpMessage {
+                    CaughtUpBanner()
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: showCaughtUpMessage)
             .overlay(alignment: .bottomTrailing) {
                 if showScrollToTop {
                     ScrollToTopButton {
@@ -336,6 +354,24 @@ struct ScrollToTopButton: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Caught Up Banner
+struct CaughtUpBanner: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+            Text("You're all caught up")
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .padding(.top, 8)
     }
 }
 
