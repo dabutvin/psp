@@ -261,6 +261,10 @@ struct PostsList: View {
                         }
                         // Immediately hide when tapped
                         showScrollToTop = false
+                        // Refresh feed from API
+                        Task {
+                            await viewModel.refresh()
+                        }
                     }
                     .padding(.trailing, 20)
                     .padding(.bottom, 20)

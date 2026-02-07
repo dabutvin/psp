@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.psp.classifieds", category: "API")
 
 enum APIError: Error, LocalizedError {
     case invalidURL
@@ -175,25 +178,35 @@ actor APIClient {
     // MARK: - Private
     
     private func fetch<T: Decodable>(url: URL) async throws -> T {
+        logger.info("→ GET \(url.absoluteString)")
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
         do {
             let (data, response) = try await session.data(from: url)
+            let elapsed = String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw APIError.networkError(URLError(.badServerResponse))
             }
             
             guard (200...299).contains(httpResponse.statusCode) else {
+                logger.error("← \(httpResponse.statusCode) (\(elapsed)ms) \(url.absoluteString)")
                 throw APIError.serverError(httpResponse.statusCode)
             }
+            
+            logger.info("← \(httpResponse.statusCode) (\(elapsed)ms, \(data.count) bytes) \(url.absoluteString)")
             
             do {
                 return try decoder.decode(T.self, from: data)
             } catch {
+                logger.error("← Decode error: \(error.localizedDescription)")
                 throw APIError.decodingError(error)
             }
         } catch let error as APIError {
             throw error
         } catch {
+            let elapsed = String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            logger.error("← Network error (\(elapsed)ms): \(error.localizedDescription)")
             throw APIError.networkError(error)
         }
     }
