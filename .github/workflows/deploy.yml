@@ -1,0 +1,75 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run tests
+        run: uv run pytest tests/ -v
+
+  deploy-api:
+    name: Deploy API
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Set secrets
+        run: |
+          flyctl secrets set DATABASE_URL="${{ secrets.DATABASE_URL }}" --stage
+          flyctl secrets set GROUPS_IO_API_TOKEN="${{ secrets.GROUPS_IO_API_TOKEN }}" --stage
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy
+        run: flyctl deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  deploy-fetcher:
+    name: Deploy Fetcher
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Set secrets
+        run: |
+          flyctl secrets set -a psp-fetcher DATABASE_URL="${{ secrets.DATABASE_URL }}" --stage
+          flyctl secrets set -a psp-fetcher GROUPS_IO_API_TOKEN="${{ secrets.GROUPS_IO_API_TOKEN }}" --stage
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy
+        run: flyctl deploy -c fly.fetcher.toml
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
