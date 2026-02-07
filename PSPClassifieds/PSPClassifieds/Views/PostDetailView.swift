@@ -155,29 +155,48 @@ struct PostDetailView: View {
 // MARK: - Image Gallery
 struct ImageGallery: View {
     let attachments: [Attachment]
-    @State private var selectedIndex = 0
+    @State private var selectedIndex: Int? = 0
     
     var body: some View {
-        TabView(selection: $selectedIndex) {
-            ForEach(Array(attachments.enumerated()), id: \.element.id) { index, attachment in
-                AuthenticatedImage(url: attachment.imageURL, contentMode: .fit) {
-                    SkeletonGalleryImage()
-                } errorView: { error in
-                    VStack(spacing: 8) {
-                        Image(systemName: errorIcon(for: error))
-                            .font(.largeTitle)
-                            .foregroundStyle(.tertiary)
-                        Text(errorMessage(for: error))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(Array(attachments.enumerated()), id: \.element.id) { index, attachment in
+                    AuthenticatedImage(url: attachment.imageURL, contentMode: .fit) {
+                        SkeletonGalleryImage()
+                    } errorView: { error in
+                        VStack(spacing: 8) {
+                            Image(systemName: errorIcon(for: error))
+                                .font(.largeTitle)
+                                .foregroundStyle(.tertiary)
+                            Text(errorMessage(for: error))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .containerRelativeFrame(.horizontal)
+                    .id(index)
                 }
-                .tag(index)
             }
+            .scrollTargetLayout()
         }
-        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .scrollTargetBehavior(.paging)
+        .scrollBounceBehavior(.always)
+        .scrollIndicators(.hidden)
+        .scrollPosition(id: $selectedIndex)
         .frame(height: 300)
         .background(Color(.secondarySystemBackground))
+        .overlay(alignment: .bottom) {
+            if attachments.count > 1 {
+                HStack(spacing: 6) {
+                    ForEach(0..<attachments.count, id: \.self) { index in
+                        Circle()
+                            .fill(index == (selectedIndex ?? 0) ? Color.white : Color.white.opacity(0.5))
+                            .frame(width: 7, height: 7)
+                    }
+                }
+                .padding(.bottom, 8)
+            }
+        }
     }
     
     private func errorIcon(for error: Error) -> String {
