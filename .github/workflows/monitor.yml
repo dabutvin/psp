@@ -25,7 +25,7 @@ jobs:
           # Parse fields
           LAST_SYNC=$(echo "$RESPONSE" | jq -r '.last_sync // empty')
           NEWEST_POST=$(echo "$RESPONSE" | jq -r '.newest_message_date // empty')
-          DB_MB=$(echo "$RESPONSE" | jq -r '.database.total_mb')
+          DB_MB=$(echo "$RESPONSE" | jq -r '.database.total_mb // empty')
 
           ALERTS=""
 
@@ -52,11 +52,16 @@ jobs:
           fi
 
           # Check 3: DB size >= 400MB
-          DB_MB_INT=${DB_MB%.*}
-          echo "DB size: ${DB_MB}MB"
-          if [ "$DB_MB_INT" -ge 400 ]; then
-            TABLES=$(echo "$RESPONSE" | jq -r '[.database.tables[] | "\(.name): \(.size_mb)MB"] | join(", ")')
-            ALERTS="${ALERTS:+$ALERTS\n}DB is ${DB_MB}MB / 500MB. Tables: $TABLES"
+          if [ -n "$DB_MB" ]; then
+            DB_MB_INT=${DB_MB%.*}
+            echo "DB size: ${DB_MB}MB"
+            if [ "$DB_MB_INT" -ge 400 ]; then
+              TABLES=$(echo "$RESPONSE" | jq -r '[.database.tables[] | "\(.name): \(.size_mb)MB"] | join(", ")')
+              ALERTS="${ALERTS:+$ALERTS\n}DB is ${DB_MB}MB / 500MB. Tables: $TABLES"
+            fi
+          else
+            echo "DB size: not available"
+            ALERTS="${ALERTS:+$ALERTS\n}DB size info missing from API response"
           fi
 
           # Fail the workflow if any alerts fired
