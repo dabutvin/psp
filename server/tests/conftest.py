@@ -136,15 +136,44 @@ class MockDatabase:
         if "from hashtags" in query_lower and "group by" in query_lower:
             return self._aggregate_hashtags()
         
+        # Table sizes query (for stats endpoint)
+        if "pg_statio_user_tables" in query_lower:
+            return [
+                make_record(table_name="messages", total_bytes=100 * 1024 * 1024),
+                make_record(table_name="hashtags", total_bytes=30 * 1024 * 1024),
+                make_record(table_name="attachments", total_bytes=15 * 1024 * 1024),
+                make_record(table_name="sync_state", total_bytes=8192),
+            ]
+        
         return []
     
     async def fetchrow(self, query: str, *args) -> MockRecord | None:
+        query_lower = query.lower()
+        
+        # Stats: message count + date range
+        if "count(*)" in query_lower and "min(created)" in query_lower:
+            dates = [m["created"] for m in self.messages if m.get("created")]
+            return make_record(
+                total=len(self.messages),
+                oldest=min(dates) if dates else None,
+                newest=max(dates) if dates else None,
+            )
+        
+        # Stats: sync state
+        if "from sync_state" in query_lower:
+            return make_record(
+                last_fetch_at=datetime(2026, 2, 8, 12, 0, 0, tzinfo=timezone.utc),
+                backfill_page_token=None,
+            )
+        
         results = await self.fetch(query, *args)
         return results[0] if results else None
     
     async def fetchval(self, query: str, *args) -> Any:
         if "select 1" in query.lower():
             return 1
+        if "pg_database_size" in query.lower():
+            return 150 * 1024 * 1024  # 150MB
         return None
     
     def _filter_messages(self, query: str, args: tuple) -> list[MockRecord]:
