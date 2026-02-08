@@ -9,6 +9,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 from sync.client import GroupsIOClient, RateLimitError
+from sync.notify import send_new_post_notifications_sync
 from core.config import get_db_url
 from core.logging import get_logger
 from core.models import Message
@@ -20,6 +21,7 @@ def fetch_new_messages(
     batch_size: int = 100,
     max_messages: int = 1000,
     dry_run: bool = False,
+    send_notifications: bool = True,
 ) -> int:
     """
     Fetch new messages from groups.io until we hit one we already have.
@@ -28,6 +30,7 @@ def fetch_new_messages(
         batch_size: Number of messages to fetch per API call (max 100)
         max_messages: Maximum total messages to fetch (safety limit)
         dry_run: If True, don't insert into database
+        send_notifications: If True, send push notifications for new posts
 
     Returns:
         Number of new messages fetched and stored
@@ -38,6 +41,7 @@ def fetch_new_messages(
     total_fetched = 0
     total_new = 0
     page_token = None
+    all_new_messages: list[Message] = []  # Collect for notifications
 
     with psycopg2.connect(db_url) as conn:
         with conn.cursor() as cur:
@@ -82,6 +86,7 @@ def fetch_new_messages(
                 if new_messages:
                     if not dry_run:
                         _insert_messages(cur, new_messages)
+                    all_new_messages.extend(new_messages)
                     total_new += len(new_messages)
                     logger.info(
                         f"Inserted {len(new_messages)} new messages",
@@ -121,6 +126,27 @@ def fetch_new_messages(
         f"Fetch complete: {total_new} new messages from {total_fetched} checked",
         extra={"total_new": total_new, "total_checked": total_fetched},
     )
+
+    # Send push notifications for new posts (only non-reply posts)
+    if send_notifications and all_new_messages and not dry_run:
+        # Filter to only original posts (not replies) for notifications
+        posts_for_notification = [
+            {
+                "id": m.id,
+                "subject": m.subject,
+                "hashtags": [h.name for h in m.hashtags],
+            }
+            for m in all_new_messages
+            if not m.is_reply
+        ]
+        
+        if posts_for_notification:
+            try:
+                sent = send_new_post_notifications_sync(posts_for_notification)
+                logger.info(f"Sent {sent} push notifications for {len(posts_for_notification)} new posts")
+            except Exception as e:
+                logger.error(f"Failed to send push notifications: {e}")
+
     return total_new
 
 

@@ -1,15 +1,46 @@
 import SwiftUI
 import SwiftData
+import UIKit
+
+// MARK: - App Delegate for Push Notifications
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Register background fetch task early in app lifecycle
+        BackgroundFetchManager.shared.registerBackgroundTask()
+        return true
+    }
+    
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        Task { @MainActor in
+            NotificationManager.shared.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+        }
+    }
+    
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        Task { @MainActor in
+            NotificationManager.shared.didFailToRegisterForRemoteNotifications(error: error)
+        }
+    }
+}
+
+// MARK: - Main App
 
 @main
 struct PSPClassifiedsApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var authManager = AuthManager()
+    @StateObject private var notificationManager = NotificationManager.shared
     @State private var savedPostsManager = SavedPostsManager()
-    
-    init() {
-        // Register background fetch task early in app lifecycle
-        BackgroundFetchManager.shared.registerBackgroundTask()
-    }
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -31,12 +62,15 @@ struct PSPClassifiedsApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
+                .environmentObject(notificationManager)
                 .environment(savedPostsManager)
                 .modelContainer(sharedModelContainer)
                 .onAppear {
                     savedPostsManager.configure(with: sharedModelContainer.mainContext)
                     // Schedule background refresh when app becomes active
                     BackgroundFetchManager.shared.scheduleAppRefresh()
+                    // Clear badge when app opens
+                    notificationManager.clearBadge()
                 }
         }
     }
@@ -44,6 +78,7 @@ struct PSPClassifiedsApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var notificationManager: NotificationManager
     
     var body: some View {
         Group {
@@ -55,6 +90,19 @@ struct ContentView: View {
         }
         .onAppear {
             authManager.checkLoginStatus()
+        }
+        .task {
+            // Request notification permission after login
+            if authManager.isAuthenticated {
+                await notificationManager.requestAuthorization()
+            }
+        }
+        .onChange(of: authManager.isAuthenticated) { _, isAuthenticated in
+            if isAuthenticated {
+                Task {
+                    await notificationManager.requestAuthorization()
+                }
+            }
         }
     }
 }

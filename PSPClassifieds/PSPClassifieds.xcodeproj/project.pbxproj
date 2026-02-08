@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0C50123D2F39035100C51E50 /* SimilarItemsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */; };
 		0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */; };
+		0C5012422F391FA700C51E50 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5012412F391FA700C51E50 /* NotificationManager.swift */; };
 		A1000001299999990000000A /* PSPClassifiedsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001A /* PSPClassifiedsApp.swift */; };
 		A1000001299999990000000B /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001B /* Post.swift */; };
 		A1000001299999990000000C /* Hashtag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001C /* Hashtag.swift */; };
@@ -35,8 +36,8 @@
 		A10000012999999900000063 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000073 /* MainTabView.swift */; };
 		A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000090 /* AuthenticatedImageLoader.swift */; };
 		A10000012999999900000081 /* AuthenticatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000091 /* AuthenticatedImage.swift */; };
-		A10000012999999900000083 /* ZoomableImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000093 /* ZoomableImageViewer.swift */; };
 		A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000092 /* String+HTMLDecoding.swift */; };
+		A10000012999999900000083 /* ZoomableImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000093 /* ZoomableImageViewer.swift */; };
 		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 		A100000129999999000000C0 /* FeedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000C1 /* FeedCache.swift */; };
 		A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000D1 /* BackgroundFetchManager.swift */; };
@@ -56,6 +57,8 @@
 /* Begin PBXFileReference section */
 		0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarItemsSection.swift; sourceTree = "<group>"; };
 		0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarSearchQueryTests.swift; sourceTree = "<group>"; };
+		0C5012402F391B7500C51E50 /* PSPClassifieds.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PSPClassifieds.entitlements; sourceTree = "<group>"; };
+		0C5012412F391FA700C51E50 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		A10000012999999900000001 /* PSPClassifieds.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PSPClassifieds.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000001299999990000001A /* PSPClassifiedsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSPClassifiedsApp.swift; sourceTree = "<group>"; };
 		A1000001299999990000001B /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
@@ -83,8 +86,8 @@
 		A10000012999999900000073 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		A10000012999999900000090 /* AuthenticatedImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImageLoader.swift; sourceTree = "<group>"; };
 		A10000012999999900000091 /* AuthenticatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImage.swift; sourceTree = "<group>"; };
-		A10000012999999900000093 /* ZoomableImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableImageViewer.swift; sourceTree = "<group>"; };
 		A10000012999999900000092 /* String+HTMLDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+HTMLDecoding.swift"; sourceTree = "<group>"; };
+		A10000012999999900000093 /* ZoomableImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableImageViewer.swift; sourceTree = "<group>"; };
 		A100000129999999000000B1 /* PostPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPagerView.swift; sourceTree = "<group>"; };
 		A100000129999999000000C1 /* FeedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedCache.swift; sourceTree = "<group>"; };
 		A100000129999999000000D1 /* BackgroundFetchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFetchManager.swift; sourceTree = "<group>"; };
@@ -123,6 +126,7 @@
 		A10000012999999900000004 /* PSPClassifieds */ = {
 			isa = PBXGroup;
 			children = (
+				0C5012402F391B7500C51E50 /* PSPClassifieds.entitlements */,
 				A1000001299999990000001A /* PSPClassifiedsApp.swift */,
 				A100000129999999000000D2 /* Info.plist */,
 				A10000012999999900000030 /* Models */,
@@ -193,6 +197,7 @@
 				A10000012999999900000090 /* AuthenticatedImageLoader.swift */,
 				A100000129999999000000C1 /* FeedCache.swift */,
 				A100000129999999000000D1 /* BackgroundFetchManager.swift */,
+				0C5012412F391FA700C51E50 /* NotificationManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -355,6 +360,7 @@
 				A10000012999999900000043 /* FilterViewModel.swift in Sources */,
 				A10000012999999900000060 /* SavedPost.swift in Sources */,
 				A10000012999999900000061 /* SavedPostsManager.swift in Sources */,
+				0C5012422F391FA700C51E50 /* NotificationManager.swift in Sources */,
 				A10000012999999900000062 /* SavedPostsView.swift in Sources */,
 				A10000012999999900000063 /* MainTabView.swift in Sources */,
 				A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */,
@@ -513,6 +519,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PSPClassifieds/PSPClassifieds.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -543,6 +550,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PSPClassifieds/PSPClassifieds.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;

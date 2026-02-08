@@ -175,6 +175,65 @@ actor APIClient {
         return response.hashtags
     }
     
+    // MARK: - Device Registration (Push Notifications)
+    
+    func registerDevice(
+        token: String,
+        platform: String = "ios",
+        environment: String = {
+            #if DEBUG
+            return "sandbox"
+            #else
+            return "production"
+            #endif
+        }(),
+        hashtagFilters: [String]? = nil
+    ) async throws {
+        guard let url = URL(string: "\(baseURL)/devices") else {
+            throw APIError.invalidURL
+        }
+        
+        var body: [String: Any] = [
+            "token": token,
+            "platform": platform,
+            "environment": environment
+        ]
+        
+        if let filters = hashtagFilters {
+            body["hashtag_filters"] = filters
+        }
+        
+        try await post(url: url, body: body)
+    }
+    
+    func updateDevice(
+        token: String,
+        hashtagFilters: [String]?,
+        enabled: Bool
+    ) async throws {
+        guard let url = URL(string: "\(baseURL)/devices/\(token)") else {
+            throw APIError.invalidURL
+        }
+        
+        var body: [String: Any] = ["enabled": enabled]
+        
+        if let filters = hashtagFilters {
+            body["hashtag_filters"] = filters
+        } else {
+            body["hashtag_filters"] = NSNull()
+        }
+        
+        try await patch(url: url, body: body)
+    }
+    
+    func unregisterDevice(token: String) async throws {
+        guard let url = URL(string: "\(baseURL)/devices/\(token)") else {
+            throw APIError.invalidURL
+        }
+        
+        try await delete(url: url)
+    }
+    
     // MARK: - Private
     
     private func fetch<T: Decodable>(url: URL) async throws -> T {
@@ -202,6 +261,62 @@ actor APIClient {
                 logger.error("← Decode error: \(error.localizedDescription)")
                 throw APIError.decodingError(error)
             }
+        } catch let error as APIError {
+            throw error
+        } catch {
+            let elapsed = String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            logger.error("← Network error (\(elapsed)ms): \(error.localizedDescription)")
+            throw APIError.networkError(error)
+        }
+    }
+    
+    @discardableResult
+    private func post(url: URL, body: [String: Any]) async throws -> Data {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        return try await sendRequest(request, method: "POST")
+    }
+    
+    @discardableResult
+    private func patch(url: URL, body: [String: Any]) async throws -> Data {
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        return try await sendRequest(request, method: "PATCH")
+    }
+    
+    @discardableResult
+    private func delete(url: URL) async throws -> Data {
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        
+        return try await sendRequest(request, method: "DELETE")
+    }
+    
+    private func sendRequest(_ request: URLRequest, method: String) async throws -> Data {
+        logger.info("→ \(method) \(request.url?.absoluteString ?? "?")")
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        do {
+            let (data, response) = try await session.data(for: request)
+            let elapsed = String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.networkError(URLError(.badServerResponse))
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                logger.error("← \(httpResponse.statusCode) (\(elapsed)ms) \(request.url?.absoluteString ?? "?")")
+                throw APIError.serverError(httpResponse.statusCode)
+            }
+            
+            logger.info("← \(httpResponse.statusCode) (\(elapsed)ms) \(request.url?.absoluteString ?? "?")")
+            return data
         } catch let error as APIError {
             throw error
         } catch {
