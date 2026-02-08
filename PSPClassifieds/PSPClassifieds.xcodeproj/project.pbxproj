@@ -34,6 +34,7 @@
 		A10000012999999900000063 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000073 /* MainTabView.swift */; };
 		A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000090 /* AuthenticatedImageLoader.swift */; };
 		A10000012999999900000081 /* AuthenticatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000091 /* AuthenticatedImage.swift */; };
+		A10000012999999900000083 /* ZoomableImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000093 /* ZoomableImageViewer.swift */; };
 		A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012999999900000092 /* String+HTMLDecoding.swift */; };
 		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 		A100000129999999000000C0 /* FeedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000C1 /* FeedCache.swift */; };
@@ -68,6 +69,7 @@
 		A10000012999999900000073 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		A10000012999999900000090 /* AuthenticatedImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImageLoader.swift; sourceTree = "<group>"; };
 		A10000012999999900000091 /* AuthenticatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedImage.swift; sourceTree = "<group>"; };
+		A10000012999999900000093 /* ZoomableImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableImageViewer.swift; sourceTree = "<group>"; };
 		A10000012999999900000092 /* String+HTMLDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+HTMLDecoding.swift"; sourceTree = "<group>"; };
 		A100000129999999000000B1 /* PostPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPagerView.swift; sourceTree = "<group>"; };
 		A100000129999999000000C1 /* FeedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedCache.swift; sourceTree = "<group>"; };
@@ -194,6 +196,7 @@
 				A10000012999999900000027 /* HashtagPill.swift */,
 				A10000012999999900000028 /* SkeletonLoader.swift */,
 				A10000012999999900000091 /* AuthenticatedImage.swift */,
+				A10000012999999900000093 /* ZoomableImageViewer.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -357,6 +360,7 @@
 				A10000012999999900000063 /* MainTabView.swift in Sources */,
 				A10000012999999900000080 /* AuthenticatedImageLoader.swift in Sources */,
 				A10000012999999900000081 /* AuthenticatedImage.swift in Sources */,
+				A10000012999999900000083 /* ZoomableImageViewer.swift in Sources */,
 				A10000012999999900000082 /* String+HTMLDecoding.swift in Sources */,
 				A100000129999999000000B0 /* PostPagerView.swift in Sources */,
 				A100000129999999000000C0 /* FeedCache.swift in Sources */,

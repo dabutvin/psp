@@ -156,6 +156,7 @@ struct PostDetailView: View {
 struct ImageGallery: View {
     let attachments: [Attachment]
     @State private var selectedIndex: Int? = 0
+    @State private var showZoomViewer = false
     
     var body: some View {
         ScrollView(.horizontal) {
@@ -175,6 +176,11 @@ struct ImageGallery: View {
                     }
                     .containerRelativeFrame(.horizontal)
                     .id(index)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedIndex = index
+                        showZoomViewer = true
+                    }
                 }
             }
             .scrollTargetLayout()
@@ -196,6 +202,16 @@ struct ImageGallery: View {
                 }
                 .padding(.bottom, 8)
             }
+        }
+        .fullScreenCover(isPresented: $showZoomViewer) {
+            ZoomableImageViewer(
+                attachments: attachments,
+                selectedIndex: Binding(
+                    get: { selectedIndex ?? 0 },
+                    set: { selectedIndex = $0 }
+                ),
+                isPresented: $showZoomViewer
+            )
         }
     }
     
