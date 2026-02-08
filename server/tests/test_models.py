@@ -4,7 +4,7 @@ Tests for core/models.py utility functions.
 
 import pytest
 
-from core.models import extract_email, extract_price
+from core.models import extract_email
 
 
 class TestExtractEmail:
@@ -62,54 +62,3 @@ class TestExtractEmail:
         """Should handle emails with plus signs."""
         assert extract_email("user+tag@example.com") == "user+tag@example.com"
         assert extract_email("Name <user+tag@example.com>") == "user+tag@example.com"
-
-
-class TestExtractPrice:
-    """Tests for extract_price function."""
-
-    def test_dollar_sign_price(self):
-        """Should extract prices with dollar sign."""
-        assert extract_price("Selling chair for $50", None) == "$50"
-        assert extract_price("$100 OBO", None) == "$100"
-        assert extract_price(None, "Great condition, asking $25") == "$25"
-
-    def test_price_with_decimals(self):
-        """Should extract prices with decimal amounts."""
-        assert extract_price("Only $19.99!", None) == "$19.99"
-        assert extract_price("$1,000.00 firm", None) == "$1,000.00"
-
-    def test_price_with_commas(self):
-        """Should extract prices with thousand separators."""
-        assert extract_price("Asking $1,500", None) == "$1,500"
-        assert extract_price("$2,000 or best offer", None) == "$2,000"
-
-    def test_asking_price_format(self):
-        """Should extract 'asking X' format (without dollar sign)."""
-        # When there's a $, the $ pattern matches first
-        assert extract_price("asking $50", None) == "$50"
-        # Without $, the 'asking' pattern matches
-        assert extract_price("Asking 100 for it", None) == "Asking 100"
-
-    def test_dollars_word(self):
-        """Should extract prices with 'dollars' word."""
-        assert extract_price("50 dollars", None) == "50 dollars"
-        assert extract_price("100 Dollars OBO", None) == "100 Dollars"
-
-    def test_obo_format(self):
-        """Should extract prices with OBO."""
-        assert extract_price("40 obo", None) == "40 obo"
-        assert extract_price("$75 OBO", None) == "$75"
-
-    def test_price_in_body_fallback(self):
-        """Should find price in body if not in subject."""
-        assert extract_price("For Sale: Chair", "Nice chair, $50") == "$50"
-
-    def test_no_price(self):
-        """Should return None when no price found."""
-        assert extract_price("Free baby clothes", "Giving away") is None
-        assert extract_price("ISO: Double stroller", "Looking for one") is None
-
-    def test_none_inputs(self):
-        """Should handle None inputs."""
-        assert extract_price(None, None) is None
-        assert extract_price("", "") is None

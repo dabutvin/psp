@@ -9,6 +9,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, computed_field
 
+from core.price import extract_price
+
 
 class Hashtag(BaseModel):
     """Hashtag associated with a message."""
@@ -130,31 +132,6 @@ class StatsResponse(BaseModel):
 
 
 # Utility functions for field extraction
-
-
-def extract_price(subject: str | None, body: str | None) -> str | None:
-    """
-    Extract first price found in subject or body.
-
-    Matches patterns like:
-    - $40, $40.00, $1,000
-    - asking $50, asking 50
-    - 50 dollars, 40 obo
-    """
-    text = f"{subject or ''} {body or ''}"
-
-    patterns = [
-        r"\$[\d,]+(?:\.\d{2})?",  # $40, $40.00, $1,000
-        r"asking\s*\$?[\d,]+",  # asking $50, asking 50
-        r"[\d,]+\s*(?:dollars|obo)",  # 50 dollars, 40 obo
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(0)
-
-    return None
 
 
 def extract_email(name: str | None) -> str | None:
