@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
+    # APNs Push Notifications (optional)
+    apns_key_id: str | None = None          # 10-char key ID from Apple Developer portal
+    apns_team_id: str | None = None         # 10-char team ID from Apple Developer portal
+    apns_bundle_id: str | None = None       # App bundle ID (e.g., com.psp.classifieds)
+    apns_key_path: str | None = None        # Path to .p8 key file (local dev)
+    apns_key_content: str | None = None     # .p8 key content (for Fly.io secrets)
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

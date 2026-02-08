@@ -75,6 +75,20 @@ CREATE TABLE IF NOT EXISTS sync_state (
 
 -- Initialize sync_state if empty
 INSERT INTO sync_state (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Device tokens for push notifications
+CREATE TABLE IF NOT EXISTS device_tokens (
+    id SERIAL PRIMARY KEY,
+    token TEXT UNIQUE NOT NULL,           -- APNs device token (hex string)
+    platform TEXT DEFAULT 'ios',          -- 'ios' or 'macos'
+    environment TEXT DEFAULT 'production', -- 'production' or 'sandbox'
+    hashtag_filters TEXT[],               -- NULL = all posts, or array of hashtag names
+    enabled BOOLEAN DEFAULT TRUE,         -- user can disable notifications
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_device_tokens_enabled ON device_tokens(enabled) WHERE enabled = TRUE;
 """
 
 # Full-text search setup (run after initial schema)
