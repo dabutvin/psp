@@ -85,6 +85,62 @@ final class PostTests: XCTestCase {
         XCTAssertEqual(input.decodingHTMLEntities(), "it's great")
     }
 
+    // MARK: - Attachment URL Handling
+
+    func testAttachmentFullURL() {
+        let attachment = Attachment(
+            downloadUrl: "https://groups.parkslopeparents.com/g/Classifieds/attachment/123/0/photo.jpg",
+            thumbnailUrl: nil,
+            filename: "photo.jpg",
+            mediaType: "image/jpeg",
+            attachmentIndex: 0
+        )
+        XCTAssertEqual(
+            attachment.imageURL,
+            URL(string: "https://groups.parkslopeparents.com/g/Classifieds/attachment/123/0/photo.jpg")
+        )
+    }
+
+    func testAttachmentRelativeURL() {
+        let attachment = Attachment(
+            downloadUrl: "/attachment/722075/0",
+            thumbnailUrl: nil,
+            filename: "photo.jpg",
+            mediaType: "image/jpeg",
+            attachmentIndex: 0
+        )
+        XCTAssertEqual(
+            attachment.imageURL,
+            URL(string: "https://groups.parkslopeparents.com/g/Classifieds/attachment/722075/0")
+        )
+    }
+
+    func testAttachmentThumbnailRelativeURL() {
+        let attachment = Attachment(
+            downloadUrl: "/attachment/722075/0",
+            thumbnailUrl: "/attachment/722075/0?thumb=1",
+            filename: "photo.jpg",
+            mediaType: "image/jpeg",
+            attachmentIndex: 0
+        )
+        XCTAssertEqual(
+            attachment.thumbnailImageURL,
+            URL(string: "https://groups.parkslopeparents.com/g/Classifieds/attachment/722075/0?thumb=1")
+        )
+    }
+
+    func testAttachmentNilURL() {
+        let attachment = Attachment(
+            downloadUrl: nil,
+            thumbnailUrl: nil,
+            filename: nil,
+            mediaType: nil,
+            attachmentIndex: nil
+        )
+        XCTAssertNil(attachment.imageURL)
+        XCTAssertNil(attachment.thumbnailImageURL)
+    }
+
     // MARK: - Helpers
 
     private func makePost(
