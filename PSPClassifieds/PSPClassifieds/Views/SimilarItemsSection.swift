@@ -331,6 +331,86 @@ struct MoreButton: View {
     }
 }
 
+// MARK: - Similar Results List View
+/// A list view for showing "more" similar items (navigated from the More button)
+struct SimilarResultsListView: View {
+    let searchQuery: String
+    let excludePostId: Int
+    
+    @State private var posts: [Post] = []
+    @State private var isLoading = true
+    @State private var selectedPost: Post?
+    @State private var lastViewedPostId: Int?
+    @State private var startingPostId: Int?
+    
+    var body: some View {
+        Group {
+            if isLoading {
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Loading...")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if posts.isEmpty {
+                ContentUnavailableView.search(text: searchQuery)
+            } else {
+                ScrollViewReader { proxy in
+                    List {
+                        Section {
+                            ForEach(posts) { post in
+                                Button {
+                                    selectedPost = post
+                                } label: {
+                                    PostCardView(post: post)
+                                }
+                                .buttonStyle(.plain)
+                                .id(post.id)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowSeparator(.hidden)
+                            }
+                        } header: {
+                            Text("\(posts.count) result\(posts.count == 1 ? "" : "s")")
+                        }
+                    }
+                    .listStyle(.plain)
+                    .navigationDestination(item: $selectedPost) { post in
+                        StaticPostPagerView(posts: posts, initialPost: post, lastViewedPostId: $lastViewedPostId)
+                    }
+                    .onChange(of: selectedPost) { oldValue, newValue in
+                        if let post = newValue {
+                            startingPostId = post.id
+                        } else if oldValue != nil, let lastId = lastViewedPostId, let startId = startingPostId {
+                            let startIndex = posts.firstIndex { $0.id == startId } ?? 0
+                            let endIndex = posts.firstIndex { $0.id == lastId } ?? 0
+                            if abs(endIndex - startIndex) > 2 {
+                                proxy.scrollTo(lastId, anchor: .center)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Similar to \"\(searchQuery)\"")
+        .task {
+            await loadResults()
+        }
+    }
+    
+    private func loadResults() async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            let response = try await APIClient.shared.getPosts(search: searchQuery)
+            posts = response.messages.filter { $0.id != excludePostId }
+        } catch {
+            similarItemsLogger.error("Failed to load similar results: \(error.localizedDescription)")
+            posts = []
+        }
+    }
+}
+
 #Preview {
     @Previewable @State var selectedSimilarPost: Post?
     @Previewable @State var similarPostsForMore: [Post] = []

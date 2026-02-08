@@ -122,15 +122,14 @@ struct PostDetailView: View {
             }
             .padding(.bottom, 32)
         }
-        .navigationTitle("Post Details")
+        .navigationTitle((post.subject ?? "Post").decodingHTMLEntities())
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $selectedSimilarPost) { similarPost in
             PostDetailView(post: similarPost)
         }
         .navigationDestination(isPresented: $showMoreSimilar) {
-            if let query = similarSearchQuery, let firstPost = similarPostsForMore.first {
-                StaticPostPagerView(posts: similarPostsForMore, initialPost: firstPost)
-                    .navigationTitle("Similar to \"\(query)\"")
+            if let query = similarSearchQuery {
+                SimilarResultsListView(searchQuery: query, excludePostId: post.id)
             }
         }
         .toolbar {

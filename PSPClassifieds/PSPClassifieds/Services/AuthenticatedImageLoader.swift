@@ -74,25 +74,25 @@ class AuthenticatedImageLoader: ObservableObject {
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", forHTTPHeaderField: "User-Agent")
         request.setValue("https://groups.parkslopeparents.com", forHTTPHeaderField: "Referer")
         
-        #if DEBUG
-        // Log cookies being sent
-        if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
-            print("🍪 Sending \(cookies.count) cookies for \(url.host ?? "unknown")")
-            for cookie in cookies {
-                print("   - \(cookie.name): \(cookie.value.prefix(20))...")
-            }
-        }
-        #endif
+        // #if DEBUG
+        // // Log cookies being sent
+        // if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+        //     print("🍪 Sending \(cookies.count) cookies for \(url.host ?? "unknown")")
+        //     for cookie in cookies {
+        //         print("   - \(cookie.name): \(cookie.value.prefix(20))...")
+        //     }
+        // }
+        // #endif
         
         let (data, response) = try await Self.session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw ImageLoadError.invalidResponse
         }
-        
-        #if DEBUG
-        print("🖼️ Image response: \(httpResponse.statusCode) for \(url.lastPathComponent)")
-        #endif
+
+        // #if DEBUG
+        // print("🖼️ Image response: \(httpResponse.statusCode) for \(url.lastPathComponent)")
+        // #endif
         
         guard (200...299).contains(httpResponse.statusCode) else {
             throw ImageLoadError.httpError(httpResponse.statusCode)
