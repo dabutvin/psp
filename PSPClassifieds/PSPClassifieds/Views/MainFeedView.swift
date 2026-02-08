@@ -315,19 +315,25 @@ struct PostsList: View {
                 }
             }
             .overlay {
-                if viewModel.posts.isEmpty && !viewModel.isLoading && !viewModel.isRefreshing {
-                    if let error = viewModel.error {
-                        ContentUnavailableView(
-                            "Unable to Load Posts",
-                            systemImage: "wifi.exclamationmark",
-                            description: Text(error.localizedDescription)
-                        )
-                    } else {
-                        ContentUnavailableView(
-                            "No Posts",
-                            systemImage: "tray",
-                            description: Text("No posts match your filters")
-                        )
+                if viewModel.posts.isEmpty {
+                    if viewModel.isRefreshing {
+                        // Loading indicator when filtering clears the feed
+                        ProgressView()
+                            .scaleEffect(1.2)
+                    } else if !viewModel.isLoading {
+                        if let error = viewModel.error {
+                            ContentUnavailableView(
+                                "Unable to Load Posts",
+                                systemImage: "wifi.exclamationmark",
+                                description: Text(error.localizedDescription)
+                            )
+                        } else {
+                            ContentUnavailableView(
+                                "No Posts",
+                                systemImage: "tray",
+                                description: Text("No posts match your filters")
+                            )
+                        }
                     }
                 }
             }
