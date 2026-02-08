@@ -4,6 +4,12 @@ struct PostDetailView: View {
     let post: Post
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
+    // Similar items navigation state
+    @State private var selectedSimilarPost: Post?
+    @State private var similarPostsForMore: [Post] = []
+    @State private var similarSearchQuery: String?
+    @State private var showMoreSimilar = false
+    
     /// All images: attachments + inline images from body HTML (deduplicated)
     private var allImages: [Attachment] {
         var images: [Attachment] = []
@@ -104,11 +110,29 @@ struct PostDetailView: View {
                     )
                 }
                 .padding(.horizontal, 20)
+                
+                // Similar Items
+                SimilarItemsSection(
+                    post: post,
+                    selectedSimilarPost: $selectedSimilarPost,
+                    similarPostsForMore: $similarPostsForMore,
+                    similarSearchQuery: $similarSearchQuery,
+                    showMoreSimilar: $showMoreSimilar
+                )
             }
             .padding(.bottom, 32)
         }
         .navigationTitle("Post Details")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $selectedSimilarPost) { similarPost in
+            PostDetailView(post: similarPost)
+        }
+        .navigationDestination(isPresented: $showMoreSimilar) {
+            if let query = similarSearchQuery, let firstPost = similarPostsForMore.first {
+                StaticPostPagerView(posts: similarPostsForMore, initialPost: firstPost)
+                    .navigationTitle("Similar to \"\(query)\"")
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

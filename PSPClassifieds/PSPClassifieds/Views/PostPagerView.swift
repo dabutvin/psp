@@ -10,6 +10,12 @@ struct PostPagerView: View {
     @Environment(SavedPostsManager.self) private var savedPostsManager
     @Environment(\.dismiss) private var dismiss
     
+    // Similar items navigation state
+    @State private var selectedSimilarPost: Post?
+    @State private var similarPostsForMore: [Post] = []
+    @State private var similarSearchQuery: String?
+    @State private var showMoreSimilar = false
+    
     init(viewModel: FeedViewModel, initialPost: Post, lastViewedPostId: Binding<Int?>) {
         self.viewModel = viewModel
         self.initialPost = initialPost
@@ -36,7 +42,13 @@ struct PostPagerView: View {
     var body: some View {
         TabView(selection: $selectedPostId) {
             ForEach(posts) { post in
-                PostDetailContent(post: post) { hashtag in
+                PostDetailContent(
+                    post: post,
+                    selectedSimilarPost: $selectedSimilarPost,
+                    similarPostsForMore: $similarPostsForMore,
+                    similarSearchQuery: $similarSearchQuery,
+                    showMoreSimilar: $showMoreSimilar
+                ) { hashtag in
                     filterByHashtag(hashtag)
                 }
                 .tag(post.id)
@@ -55,6 +67,15 @@ struct PostPagerView: View {
         }
         .onAppear {
             lastViewedPostId = selectedPostId
+        }
+        .navigationDestination(item: $selectedSimilarPost) { similarPost in
+            PostDetailView(post: similarPost)
+        }
+        .navigationDestination(isPresented: $showMoreSimilar) {
+            if let query = similarSearchQuery, let firstPost = similarPostsForMore.first {
+                StaticPostPagerView(posts: similarPostsForMore, initialPost: firstPost)
+                    .navigationTitle("Similar to \"\(query)\"")
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -87,6 +108,12 @@ struct StaticPostPagerView: View {
     @State private var selectedPostId: Int
     @Environment(SavedPostsManager.self) private var savedPostsManager
     
+    // Similar items navigation state
+    @State private var selectedSimilarPost: Post?
+    @State private var similarPostsForMore: [Post] = []
+    @State private var similarSearchQuery: String?
+    @State private var showMoreSimilar = false
+    
     init(posts: [Post], initialPost: Post, lastViewedPostId: Binding<Int?> = .constant(nil)) {
         self.posts = posts
         self.initialPost = initialPost
@@ -105,8 +132,14 @@ struct StaticPostPagerView: View {
     var body: some View {
         TabView(selection: $selectedPostId) {
             ForEach(posts) { post in
-                PostDetailContent(post: post)
-                    .tag(post.id)
+                PostDetailContent(
+                    post: post,
+                    selectedSimilarPost: $selectedSimilarPost,
+                    similarPostsForMore: $similarPostsForMore,
+                    similarSearchQuery: $similarSearchQuery,
+                    showMoreSimilar: $showMoreSimilar
+                )
+                .tag(post.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -117,6 +150,15 @@ struct StaticPostPagerView: View {
         }
         .onAppear {
             lastViewedPostId = selectedPostId
+        }
+        .navigationDestination(item: $selectedSimilarPost) { similarPost in
+            PostDetailView(post: similarPost)
+        }
+        .navigationDestination(isPresented: $showMoreSimilar) {
+            if let query = similarSearchQuery, let firstPost = similarPostsForMore.first {
+                StaticPostPagerView(posts: similarPostsForMore, initialPost: firstPost)
+                    .navigationTitle("Similar to \"\(query)\"")
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -136,8 +178,28 @@ struct StaticPostPagerView: View {
 /// The actual content of a post detail - extracted for use in pager
 struct PostDetailContent: View {
     let post: Post
+    @Binding var selectedSimilarPost: Post?
+    @Binding var similarPostsForMore: [Post]
+    @Binding var similarSearchQuery: String?
+    @Binding var showMoreSimilar: Bool
     var onHashtagTapped: ((Hashtag) -> Void)? = nil
     @Environment(SavedPostsManager.self) private var savedPostsManager
+    
+    init(
+        post: Post,
+        selectedSimilarPost: Binding<Post?>,
+        similarPostsForMore: Binding<[Post]>,
+        similarSearchQuery: Binding<String?>,
+        showMoreSimilar: Binding<Bool>,
+        onHashtagTapped: ((Hashtag) -> Void)? = nil
+    ) {
+        self.post = post
+        self._selectedSimilarPost = selectedSimilarPost
+        self._similarPostsForMore = similarPostsForMore
+        self._similarSearchQuery = similarSearchQuery
+        self._showMoreSimilar = showMoreSimilar
+        self.onHashtagTapped = onHashtagTapped
+    }
     
     /// All images: attachments + inline images from body HTML (deduplicated)
     private var allImages: [Attachment] {
@@ -239,6 +301,15 @@ struct PostDetailContent: View {
                     )
                 }
                 .padding(.horizontal, 20)
+                
+                // Similar Items
+                SimilarItemsSection(
+                    post: post,
+                    selectedSimilarPost: $selectedSimilarPost,
+                    similarPostsForMore: $similarPostsForMore,
+                    similarSearchQuery: $similarSearchQuery,
+                    showMoreSimilar: $showMoreSimilar
+                )
             }
             .padding(.bottom, 32)
         }
