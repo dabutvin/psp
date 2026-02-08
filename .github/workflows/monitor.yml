@@ -1,0 +1,82 @@
+name: Monitor
+
+on:
+  schedule:
+    # Run every 2 hours
+    - cron: "0 */2 * * *"
+
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch stats from API
+        id: stats
+        run: |
+          RESPONSE=$(curl -sf "https://psp-api.fly.dev/api/v1/stats" 2>&1) || {
+            echo "🚨 API is down or unreachable"
+            exit 1
+          }
+
+          echo "$RESPONSE" | jq .
+
+          # Parse fields
+          LAST_SYNC=$(echo "$RESPONSE" | jq -r '.last_sync // empty')
+          NEWEST_POST=$(echo "$RESPONSE" | jq -r '.newest_message_date // empty')
+          DB_MB=$(echo "$RESPONSE" | jq -r '.database.total_mb')
+
+          ALERTS=""
+
+          # Check 1: Fetcher hasn't run in 2+ hours
+          if [ -z "$LAST_SYNC" ]; then
+            ALERTS="Fetcher has never run!"
+          else
+            FETCH_AGE_S=$(( $(date -u +%s) - $(date -u -d "$LAST_SYNC" +%s) ))
+            FETCH_AGE_H=$(( FETCH_AGE_S / 3600 ))
+            echo "Fetch age: ${FETCH_AGE_H}h"
+            if [ "$FETCH_AGE_H" -ge 2 ]; then
+              ALERTS="Fetcher hasn't run in ${FETCH_AGE_H}h (last: $LAST_SYNC)"
+            fi
+          fi
+
+          # Check 2: No new posts in 12+ hours
+          if [ -n "$NEWEST_POST" ]; then
+            POST_AGE_S=$(( $(date -u +%s) - $(date -u -d "$NEWEST_POST" +%s) ))
+            POST_AGE_H=$(( POST_AGE_S / 3600 ))
+            echo "Post age: ${POST_AGE_H}h"
+            if [ "$POST_AGE_H" -ge 12 ]; then
+              ALERTS="${ALERTS:+$ALERTS\n}No new posts in ${POST_AGE_H}h (newest: $NEWEST_POST)"
+            fi
+          fi
+
+          # Check 3: DB size >= 400MB
+          DB_MB_INT=${DB_MB%.*}
+          echo "DB size: ${DB_MB}MB"
+          if [ "$DB_MB_INT" -ge 400 ]; then
+            TABLES=$(echo "$RESPONSE" | jq -r '[.database.tables[] | "\(.name): \(.size_mb)MB"] | join(", ")')
+            ALERTS="${ALERTS:+$ALERTS\n}DB is ${DB_MB}MB / 500MB. Tables: $TABLES"
+          fi
+
+          # Fail the workflow if any alerts fired
+          if [ -n "$ALERTS" ]; then
+            echo ""
+            echo "🚨 ALERTS:"
+            echo -e "$ALERTS"
+            exit 1
+          else
+            echo "All checks passed ✓"
+          fi
+
+      # TODO: Uncomment when Twilio is set up (needs TWILIO_ACCOUNT_SID,
+      #       TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, TWILIO_TO_NUMBER secrets)
+      # - name: Send SMS alert via Twilio
+      #   if: failure()
+      #   run: |
+      #     curl -s -X POST \
+      #       "https://api.twilio.com/2010-04-01/Accounts/${{ secrets.TWILIO_ACCOUNT_SID }}/Messages.json" \
+      #       -u "${{ secrets.TWILIO_ACCOUNT_SID }}:${{ secrets.TWILIO_AUTH_TOKEN }}" \
+      #       --data-urlencode "From=${{ secrets.TWILIO_FROM_NUMBER }}" \
+      #       --data-urlencode "To=${{ secrets.TWILIO_TO_NUMBER }}" \
+      #       --data-urlencode "Body=PSP Monitor failed — check https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
