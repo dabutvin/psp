@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E10000000000000000000001 /* PostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000010 /* PostTests.swift */; };
+		0C50123D2F39035100C51E50 /* SimilarItemsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */; };
+		0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */; };
 		A1000001299999990000000A /* PSPClassifiedsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001A /* PSPClassifiedsApp.swift */; };
 		A1000001299999990000000B /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001B /* Post.swift */; };
 		A1000001299999990000000C /* Hashtag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001C /* Hashtag.swift */; };
@@ -39,9 +40,22 @@
 		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 		A100000129999999000000C0 /* FeedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000C1 /* FeedCache.swift */; };
 		A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000D1 /* BackgroundFetchManager.swift */; };
+		E10000000000000000000001 /* PostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000010 /* PostTests.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		E10000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A100000129999999000000AA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000012999999900000006;
+			remoteInfo = PSPClassifieds;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarItemsSection.swift; sourceTree = "<group>"; };
+		0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarSearchQueryTests.swift; sourceTree = "<group>"; };
 		A10000012999999900000001 /* PSPClassifieds.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PSPClassifieds.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000001299999990000001A /* PSPClassifiedsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSPClassifiedsApp.swift; sourceTree = "<group>"; };
 		A1000001299999990000001B /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
@@ -75,8 +89,8 @@
 		A100000129999999000000C1 /* FeedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedCache.swift; sourceTree = "<group>"; };
 		A100000129999999000000D1 /* BackgroundFetchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFetchManager.swift; sourceTree = "<group>"; };
 		A100000129999999000000D2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		E10000000000000000000010 /* PostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTests.swift; sourceTree = "<group>"; };
 		E10000000000000000000002 /* PSPClassifiedsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PSPClassifiedsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E10000000000000000000010 /* PostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,14 +146,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		E10000000000000000000020 /* PSPClassifiedsTests */ = {
-			isa = PBXGroup;
-			children = (
-				E10000000000000000000010 /* PostTests.swift */,
-			);
-			path = PSPClassifiedsTests;
-			sourceTree = "<group>";
-		};
 		A10000012999999900000030 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -163,6 +169,7 @@
 				A10000012999999900000050 /* SearchView.swift */,
 				A10000012999999900000051 /* FilterSheet.swift */,
 				A10000012999999900000072 /* SavedPostsView.swift */,
+				0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -226,6 +233,15 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		E10000000000000000000020 /* PSPClassifiedsTests */ = {
+			isa = PBXGroup;
+			children = (
+				E10000000000000000000010 /* PostTests.swift */,
+				0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */,
+			);
+			path = PSPClassifiedsTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -264,24 +280,6 @@
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXContainerItemProxy section */
-		E10000000000000000000006 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A100000129999999000000AA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A10000012999999900000006;
-			remoteInfo = PSPClassifieds;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXTargetDependency section */
-		E10000000000000000000007 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A10000012999999900000006 /* PSPClassifieds */;
-			targetProxy = E10000000000000000000006 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		A100000129999999000000AA /* Project object */ = {
@@ -345,6 +343,7 @@
 				A10000012999999900000011 /* AuthManager.swift in Sources */,
 				A10000012999999900000012 /* LoginView.swift in Sources */,
 				A10000012999999900000013 /* FeedViewModel.swift in Sources */,
+				0C50123D2F39035100C51E50 /* SimilarItemsSection.swift in Sources */,
 				A10000012999999900000014 /* MainFeedView.swift in Sources */,
 				A10000012999999900000015 /* PostCardView.swift in Sources */,
 				A10000012999999900000016 /* PostDetailView.swift in Sources */,
@@ -372,11 +371,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */,
 				E10000000000000000000001 /* PostTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E10000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000012999999900000006 /* PSPClassifieds */;
+			targetProxy = E10000000000000000000006 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A100000129999999000000AC /* Debug */ = {
