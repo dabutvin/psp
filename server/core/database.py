@@ -82,8 +82,9 @@ CREATE TABLE IF NOT EXISTS device_tokens (
     token TEXT UNIQUE NOT NULL,           -- APNs device token (hex string)
     platform TEXT DEFAULT 'ios',          -- 'ios' or 'macos'
     environment TEXT DEFAULT 'production', -- 'production' or 'sandbox'
-    hashtag_filters TEXT[],               -- NULL = all posts, or array of hashtag names
-    enabled BOOLEAN DEFAULT TRUE,         -- user can disable notifications
+    search_filters TEXT[],                -- Array of search terms to match (max 20, each max 100 chars)
+    notify_all BOOLEAN DEFAULT FALSE,     -- If true, notify for ALL new posts
+    enabled BOOLEAN DEFAULT TRUE,         -- Master on/off switch for notifications
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

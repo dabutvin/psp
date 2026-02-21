@@ -4,7 +4,6 @@ Database migrations for PSP server.
 Contains one-time migrations for schema changes and data backfills.
 """
 
-import logging
 import time
 
 import psycopg2
@@ -93,6 +92,86 @@ def migrate_search_vectors(batch_size: int = 1000, delay: float = 0.1) -> int:
     return total_updated
 
 
+def migrate_device_tokens_schema() -> bool:
+    """
+    Migrate device_tokens table from hashtag_filters to search_filters + notify_all.
+    
+    This migration:
+    - Adds search_filters column (if not exists)
+    - Adds notify_all column (if not exists)
+    - Drops hashtag_filters column (if exists)
+    
+    Returns:
+        True if any changes were made, False if already migrated
+    """
+    db_url = get_db_url()
+    changes_made = False
+
+    with psycopg2.connect(db_url) as conn:
+        with conn.cursor() as cur:
+            # Check current columns
+            cur.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'device_tokens'
+            """)
+            existing_columns = {row[0] for row in cur.fetchall()}
+
+            # Add search_filters if missing
+            if 'search_filters' not in existing_columns:
+                logger.info("Adding search_filters column to device_tokens")
+                cur.execute("""
+                    ALTER TABLE device_tokens 
+                    ADD COLUMN search_filters TEXT[]
+                """)
+                changes_made = True
+
+            # Add notify_all if missing
+            if 'notify_all' not in existing_columns:
+                logger.info("Adding notify_all column to device_tokens")
+                cur.execute("""
+                    ALTER TABLE device_tokens 
+                    ADD COLUMN notify_all BOOLEAN DEFAULT FALSE
+                """)
+                changes_made = True
+
+            # Drop hashtag_filters if it exists
+            if 'hashtag_filters' in existing_columns:
+                logger.info("Dropping hashtag_filters column from device_tokens")
+                cur.execute("""
+                    ALTER TABLE device_tokens 
+                    DROP COLUMN hashtag_filters
+                """)
+                changes_made = True
+
+            # Add composite index for notification queries
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE tablename = 'device_tokens' 
+                    AND indexname = 'idx_device_tokens_notification'
+                )
+            """)
+            has_notification_index = cur.fetchone()[0]
+            
+            if not has_notification_index:
+                logger.info("Creating composite index for notification queries")
+                cur.execute("""
+                    CREATE INDEX idx_device_tokens_notification 
+                    ON device_tokens (enabled, notify_all)
+                    WHERE enabled = TRUE
+                """)
+                changes_made = True
+
+            conn.commit()
+
+    if changes_made:
+        logger.info("device_tokens schema migration complete")
+    else:
+        logger.info("device_tokens schema already up to date")
+
+    return changes_made
+
+
 def check_schema_version(cur) -> dict:
     """
     Check current schema state and what migrations are needed.
@@ -172,6 +251,10 @@ def run_pending_migrations() -> list[str]:
                 migrate_search_vectors()
                 migrations_run.append("search_vectors")
 
+    # Run device_tokens schema migration
+    if migrate_device_tokens_schema():
+        migrations_run.append("device_tokens_schema")
+
     return migrations_run
 
 
@@ -196,6 +279,7 @@ def print_migration_status() -> None:
 
 
 if __name__ == "__main__":
+    import logging
     from dotenv import load_dotenv
     load_dotenv()
     
