@@ -15,6 +15,7 @@ import jwt
 from core.config import get_settings
 from core.database import get_database
 from core.logging import get_logger
+from core.search import get_devices_matching_post, remove_device_token
 
 logger = get_logger(__name__)
 
@@ -58,11 +59,20 @@ class APNsConfig:
         raise ValueError("No APNs key configured (set APNS_KEY_PATH or APNS_KEY_CONTENT)")
 
 
+@dataclass
+class NotificationResult:
+    """Result of a notification send attempt."""
+    token: str
+    success: bool
+    expired: bool = False
+
+
 class APNsClient:
     """
     Apple Push Notification service client using HTTP/2.
     
     Uses JWT-based authentication (token-based, not certificate-based).
+    Reuses HTTP/2 connection for efficiency.
     """
     
     PRODUCTION_URL = "https://api.push.apple.com"
@@ -71,11 +81,26 @@ class APNsClient:
     # JWT tokens are valid for up to 1 hour, we refresh at 50 minutes
     TOKEN_REFRESH_INTERVAL = 50 * 60
     
+    # Concurrency limit for parallel notifications
+    MAX_CONCURRENT_SENDS = 10
+    
     def __init__(self, config: APNsConfig):
         self.config = config
         self._token: str | None = None
         self._token_created_at: float = 0
         self._private_key = config.get_private_key()
+        self._http_client: httpx.AsyncClient | None = None
+    
+    async def __aenter__(self) -> "APNsClient":
+        """Enter async context - create HTTP/2 client."""
+        self._http_client = httpx.AsyncClient(http2=True, timeout=30.0)
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit async context - close HTTP/2 client."""
+        if self._http_client:
+            await self._http_client.aclose()
+            self._http_client = None
     
     def _generate_token(self) -> str:
         """Generate a new JWT token for APNs authentication."""
@@ -113,7 +138,7 @@ class APNsClient:
         body: str,
         data: dict | None = None,
         environment: str = "production",
-    ) -> bool:
+    ) -> NotificationResult:
         """
         Send a push notification to a single device.
         
@@ -125,12 +150,14 @@ class APNsClient:
             environment: 'production' or 'sandbox'
         
         Returns:
-            True if successful, False otherwise
+            NotificationResult with success status and whether token expired
         """
+        if not self._http_client:
+            raise RuntimeError("APNsClient must be used as async context manager")
+        
         base_url = self.PRODUCTION_URL if environment == "production" else self.SANDBOX_URL
         url = f"{base_url}/3/device/{device_token}"
         
-        # Build the APNs payload
         payload = {
             "aps": {
                 "alert": {
@@ -153,50 +180,47 @@ class APNsClient:
         }
         
         try:
-            async with httpx.AsyncClient(http2=True) as client:
-                response = await client.post(
-                    url,
-                    json=payload,
-                    headers=headers,
-                    timeout=30.0,
+            response = await self._http_client.post(url, json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                return NotificationResult(token=device_token, success=True)
+            
+            if response.status_code == 410:
+                logger.warning(
+                    "Device token expired/invalid",
+                    extra={"token_prefix": device_token[:8], "status": 410},
                 )
-                
-                if response.status_code == 200:
-                    return True
-                
-                # Handle specific error codes
-                if response.status_code == 410:
-                    # Device token is no longer valid - should be removed
-                    logger.warning(
-                        f"Device token expired/invalid, should remove",
-                        extra={"token_prefix": device_token[:8], "status": 410},
-                    )
-                elif response.status_code == 400:
-                    error_body = response.json() if response.content else {}
-                    logger.error(
-                        f"APNs bad request",
-                        extra={"token_prefix": device_token[:8], "error": error_body},
-                    )
-                else:
-                    logger.error(
-                        f"APNs request failed",
-                        extra={
-                            "token_prefix": device_token[:8],
-                            "status": response.status_code,
-                            "body": response.text[:200] if response.text else None,
-                        },
-                    )
-                
-                return False
+                return NotificationResult(token=device_token, success=False, expired=True)
+            
+            if response.status_code == 400:
+                error_body = response.json() if response.content else {}
+                logger.error(
+                    "APNs bad request",
+                    extra={"token_prefix": device_token[:8], "error": error_body},
+                )
+            else:
+                logger.error(
+                    "APNs request failed",
+                    extra={
+                        "token_prefix": device_token[:8],
+                        "status": response.status_code,
+                        "body": response.text[:200] if response.text else None,
+                    },
+                )
+            
+            return NotificationResult(token=device_token, success=False)
                 
         except Exception as e:
             logger.error(f"APNs request exception: {e}", extra={"token_prefix": device_token[:8]})
-            return False
+            return NotificationResult(token=device_token, success=False)
 
 
 async def send_new_post_notifications(messages: list[dict]) -> int:
     """
     Send push notifications for new posts to registered devices.
+    
+    Uses full-text search matching (same as the search API) to determine
+    which devices should receive notifications based on their search_filters.
     
     Args:
         messages: List of message dicts with keys: id, subject, hashtags (list of names)
@@ -212,40 +236,27 @@ async def send_new_post_notifications(messages: list[dict]) -> int:
         logger.debug("APNs not configured, skipping notifications")
         return 0
     
-    client = APNsClient(config)
     db = get_database()
-    
-    # Ensure database is connected
     await db.connect()
     
-    # Get all enabled device tokens
-    devices = await db.fetch(
-        """
-        SELECT token, environment, hashtag_filters
-        FROM device_tokens
-        WHERE enabled = TRUE
-        """
-    )
+    logger.info(f"Processing notifications for {len(messages)} new posts")
     
-    if not devices:
-        logger.debug("No devices registered for notifications")
-        return 0
-    
-    logger.info(f"Sending notifications for {len(messages)} new posts to {len(devices)} devices")
-    
-    sent_count = 0
-    invalid_tokens = []
+    # Collect all notification tasks: (device, title, body, data)
+    notification_tasks: list[tuple[dict, str, str, dict]] = []
     
     for message in messages:
         msg_id = message["id"]
         subject = message.get("subject", "New Post")
         msg_hashtags = {h.lower() for h in message.get("hashtags", [])}
         
-        # Truncate subject for notification
+        devices = await get_devices_matching_post(db, msg_id)
+        
+        if not devices:
+            continue
+        
         title = subject[:100] if subject else "New Post"
         body = "Tap to view"
         
-        # Determine category for the notification body
         if "forsale" in msg_hashtags:
             body = "New item for sale"
         elif "forfree" in msg_hashtags:
@@ -254,32 +265,47 @@ async def send_new_post_notifications(messages: list[dict]) -> int:
             body = "Someone is looking for something"
         
         for device in devices:
-            token = device["token"]
-            environment = device["environment"]
-            filters = device["hashtag_filters"]
-            
-            # Check if this device wants this notification
-            if filters:
-                # Device has filters - check if any match
-                filter_set = {f.lower() for f in filters}
-                if not filter_set.intersection(msg_hashtags):
-                    continue  # Skip - no matching hashtags
-            
-            # Send the notification
-            success = await client.send_notification(
-                device_token=token,
-                title=title,
-                body=body,
-                data={"post_id": msg_id},
-                environment=environment,
-            )
-            
-            if success:
+            notification_tasks.append((device, title, body, {"post_id": msg_id}))
+    
+    if not notification_tasks:
+        logger.info("No devices to notify")
+        return 0
+    
+    logger.info(f"Sending {len(notification_tasks)} notifications")
+    
+    sent_count = 0
+    expired_tokens: list[str] = []
+    
+    async with APNsClient(config) as client:
+        # Process in batches to limit concurrency
+        semaphore = asyncio.Semaphore(APNsClient.MAX_CONCURRENT_SENDS)
+        
+        async def send_one(device: dict, title: str, body: str, data: dict) -> NotificationResult:
+            async with semaphore:
+                return await client.send_notification(
+                    device_token=device["token"],
+                    title=title,
+                    body=body,
+                    data=data,
+                    environment=device["environment"],
+                )
+        
+        results = await asyncio.gather(*[
+            send_one(device, title, body, data)
+            for device, title, body, data in notification_tasks
+        ])
+        
+        for result in results:
+            if result.success:
                 sent_count += 1
-            else:
-                # Track potentially invalid tokens for cleanup
-                # (In production, you'd want more sophisticated handling)
-                pass
+            elif result.expired:
+                expired_tokens.append(result.token)
+    
+    # Remove expired tokens from database
+    if expired_tokens:
+        logger.info(f"Removing {len(expired_tokens)} expired device tokens")
+        for token in expired_tokens:
+            await remove_device_token(db, token)
     
     logger.info(f"Sent {sent_count} notifications")
     return sent_count
@@ -292,14 +318,10 @@ def send_new_post_notifications_sync(messages: list[dict]) -> int:
     Use this from synchronous code (like fetch.py).
     """
     try:
-        # Try to get existing event loop
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # We're in an async context, create a new task
-            # This shouldn't happen in the CLI fetch context
-            logger.warning("Cannot run async notification from running loop")
-            return 0
-        return loop.run_until_complete(send_new_post_notifications(messages))
+        loop = asyncio.get_running_loop()
+        # We're in an async context - this shouldn't happen in CLI fetch
+        logger.warning("Cannot run async notification from running loop")
+        return 0
     except RuntimeError:
-        # No event loop, create one
+        # No running loop - safe to use asyncio.run()
         return asyncio.run(send_new_post_notifications(messages))

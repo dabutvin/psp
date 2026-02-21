@@ -28,6 +28,30 @@ def cmd_stats(args):
         print_stats(stats)
 
 
+def cmd_migrate(args):
+    """Run all pending database migrations."""
+    import logging
+    from core.logging import setup_logging
+    from core.migrations import run_pending_migrations, print_migration_status
+
+    if args.status:
+        print_migration_status()
+        return
+
+    setup_logging(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        json_format=args.json,
+    )
+
+    print("Running pending migrations...")
+    migrations_run = run_pending_migrations()
+    
+    if migrations_run:
+        print(f"Done! Ran {len(migrations_run)} migration(s): {', '.join(migrations_run)}")
+    else:
+        print("No pending migrations.")
+
+
 def cmd_migrate_search(args):
     """Migrate search vectors for existing messages."""
     import logging
@@ -196,6 +220,23 @@ def main():
         "--json", action="store_true", help="Output as JSON"
     )
     stats_parser.set_defaults(func=cmd_stats)
+
+    # migrate command (runs all pending migrations)
+    migrate_all_parser = subparsers.add_parser(
+        "migrate",
+        help="Run all pending database migrations",
+        description="Run all pending migrations including schema changes and data backfills.",
+    )
+    migrate_all_parser.add_argument(
+        "--status", action="store_true", help="Show migration status and exit"
+    )
+    migrate_all_parser.add_argument(
+        "--json", action="store_true", help="Output logs as JSON"
+    )
+    migrate_all_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+    migrate_all_parser.set_defaults(func=cmd_migrate)
 
     # migrate-search command
     migrate_parser = subparsers.add_parser(

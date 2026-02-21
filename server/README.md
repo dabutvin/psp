@@ -154,12 +154,31 @@ docker logs -f psp-backfill
 
 ```bash
 uv run python cli.py init-db              # Initialize database schema
+uv run python cli.py migrate              # Run all pending database migrations
+uv run python cli.py migrate --status     # Show migration status
 uv run python cli.py test-api             # Test groups.io API connectivity
 uv run python cli.py fetch                # Fetch new messages
 uv run python cli.py backfill --delay=5   # Backfill historical data
 uv run python cli.py serve --reload       # Start API server (dev mode)
 uv run python cli.py stats                # Show system statistics
-uv run python cli.py migrate-search       # Populate search vectors
+uv run python cli.py migrate-search       # Populate search vectors (legacy)
+```
+
+### Migrations
+
+When deploying updates that include database schema changes, run migrations:
+
+```bash
+# Check what migrations are pending
+uv run python cli.py migrate --status
+
+# Run all pending migrations
+uv run python cli.py migrate
+```
+
+On Fly.io:
+```bash
+fly ssh console -a psp-api -C "uv run python cli.py migrate"
 ```
 
 ## Project Structure

@@ -19,6 +19,7 @@ from slowapi.util import get_remote_address
 from core.database import get_database
 from core.logging import get_logger
 from core.models import Attachment, Hashtag, extract_price
+from core.search import build_search_condition
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -202,9 +203,9 @@ async def list_messages(
             params.append(hashtag_list)
             param_idx += 1
     
-    # Full-text search
+    # Full-text search (uses shared search module for consistency with notifications)
     if search:
-        conditions.append(f"m.search_vector @@ plainto_tsquery('english', ${param_idx})")
+        conditions.append(f"m.{build_search_condition(param_idx)}")
         params.append(search)
         param_idx += 1
     
