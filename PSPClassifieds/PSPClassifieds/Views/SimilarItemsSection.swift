@@ -337,11 +337,16 @@ struct SimilarResultsListView: View {
     let searchQuery: String
     let excludePostId: Int
     
+    @ObservedObject private var notificationManager = NotificationManager.shared
     @State private var posts: [Post] = []
     @State private var isLoading = true
     @State private var selectedPost: Post?
     @State private var lastViewedPostId: Int?
     @State private var startingPostId: Int?
+    
+    private var isSubscribed: Bool {
+        notificationManager.isSubscribed(to: searchQuery)
+    }
     
     var body: some View {
         Group {
@@ -370,7 +375,20 @@ struct SimilarResultsListView: View {
                                 .listRowSeparator(.hidden)
                             }
                         } header: {
-                            Text("\(posts.count) result\(posts.count == 1 ? "" : "s")")
+                            SearchResultsHeader(
+                                resultCount: posts.count,
+                                searchText: searchQuery,
+                                isSubscribed: isSubscribed,
+                                onToggleSubscription: {
+                                    Task {
+                                        if isSubscribed {
+                                            await notificationManager.unsubscribeFromSearchTerm(searchQuery)
+                                        } else {
+                                            await notificationManager.subscribeToSearchTerm(searchQuery)
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
                     .listStyle(.plain)

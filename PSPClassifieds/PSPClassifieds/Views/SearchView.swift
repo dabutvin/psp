@@ -9,7 +9,7 @@ struct SearchView: View {
         NavigationStack {
             Group {
                 if viewModel.hasSearched {
-                    SearchResultsView(viewModel: viewModel)
+                    SearchResultsView(viewModel: viewModel, notificationManager: NotificationManager.shared)
                 } else {
                     RecentSearchesView(viewModel: viewModel)
                 }
@@ -132,9 +132,14 @@ struct RecentSearchesView: View {
 // MARK: - Search Results View
 struct SearchResultsView: View {
     let viewModel: SearchViewModel
+    @ObservedObject var notificationManager: NotificationManager
     @State private var selectedPost: Post?
     @State private var lastViewedPostId: Int?
     @State private var startingPostId: Int?
+    
+    private var isSubscribed: Bool {
+        notificationManager.isSubscribed(to: viewModel.searchText)
+    }
     
     var body: some View {
         Group {
@@ -163,7 +168,20 @@ struct SearchResultsView: View {
                                 .listRowSeparator(.hidden)
                             }
                         } header: {
-                            Text("\(viewModel.results.count) result\(viewModel.results.count == 1 ? "" : "s")")
+                            SearchResultsHeader(
+                                resultCount: viewModel.results.count,
+                                searchText: viewModel.searchText,
+                                isSubscribed: isSubscribed,
+                                onToggleSubscription: {
+                                    Task {
+                                        if isSubscribed {
+                                            await notificationManager.unsubscribeFromSearchTerm(viewModel.searchText)
+                                        } else {
+                                            await notificationManager.subscribeToSearchTerm(viewModel.searchText)
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
                     .listStyle(.plain)
@@ -183,6 +201,37 @@ struct SearchResultsView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Search Results Header
+struct SearchResultsHeader: View {
+    let resultCount: Int
+    let searchText: String
+    let isSubscribed: Bool
+    let onToggleSubscription: () -> Void
+    
+    var body: some View {
+        HStack {
+            Text("\(resultCount) result\(resultCount == 1 ? "" : "s")")
+                .accessibilityLabel("\(resultCount) search result\(resultCount == 1 ? "" : "s")")
+            
+            Spacer()
+            
+            Button(action: onToggleSubscription) {
+                HStack(spacing: 4) {
+                    Image(systemName: isSubscribed ? "bell.fill" : "bell")
+                        .accessibilityHidden(true)
+                    Text(isSubscribed ? "Subscribed" : "Notify me")
+                }
+                .font(.subheadline)
+            }
+            .buttonStyle(.bordered)
+            .tint(isSubscribed ? .blue : .secondary)
+            .controlSize(.small)
+            .accessibilityLabel(isSubscribed ? "Subscribed to \(searchText)" : "Subscribe to \(searchText)")
+            .accessibilityHint(isSubscribed ? "Double tap to unsubscribe from notifications" : "Double tap to receive notifications for new posts matching this search")
         }
     }
 }

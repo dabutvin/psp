@@ -17,6 +17,12 @@ struct MainTabView: View {
                     Label("Saved", systemImage: "bookmark.fill")
                 }
                 .tag(1)
+            
+            NotificationsView()
+                .tabItem {
+                    Label("Notifications", systemImage: "bell.fill")
+                }
+                .tag(2)
         }
     }
 }
