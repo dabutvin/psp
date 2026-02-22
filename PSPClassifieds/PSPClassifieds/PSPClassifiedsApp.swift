@@ -79,11 +79,13 @@ struct PSPClassifiedsApp: App {
 struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var notificationManager: NotificationManager
+    @State private var selectedTab = 0
+    @State private var postFromNotification: Post?
     
     var body: some View {
         Group {
             if authManager.isAuthenticated {
-                MainTabView()
+                MainTabView(selectedTab: $selectedTab, postFromNotification: $postFromNotification)
             } else {
                 LoginView()
             }
@@ -101,6 +103,17 @@ struct ContentView: View {
             if isAuthenticated {
                 Task {
                     await notificationManager.requestAuthorization()
+                }
+            }
+        }
+        .onChange(of: notificationManager.pendingPostId) { _, postId in
+            guard let postId = postId else { return }
+            notificationManager.pendingPostId = nil
+            
+            Task {
+                if let post = try? await APIClient.shared.getPost(id: postId) {
+                    selectedTab = 0
+                    postFromNotification = post
                 }
             }
         }
