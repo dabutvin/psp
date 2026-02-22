@@ -104,6 +104,10 @@ struct ContentView: View {
                 Task {
                     await notificationManager.requestAuthorization()
                 }
+            } else {
+                // Reset navigation state on logout
+                selectedTab = 0
+                postFromNotification = nil
             }
         }
         .onChange(of: notificationManager.pendingPostId) { _, postId in
