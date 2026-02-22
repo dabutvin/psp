@@ -2,14 +2,13 @@ import SwiftUI
 
 struct MainFeedView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @EnvironmentObject private var notificationManager: NotificationManager
+    @Binding var postFromNotification: Post?
     @State private var viewModel = FeedViewModel()
     @State private var filterViewModel = FilterViewModel()
     @State private var showSearch = false
     @State private var showFilters = false
     @State private var backgroundedAt: Date?
     @State private var shouldScrollToTopOnReturn = false
-    @State private var postFromNotification: Post?
     
     /// Time in background before triggering auto-refresh (10 minutes)
     private let backgroundThreshold: TimeInterval = 10 * 60
@@ -99,6 +98,9 @@ struct MainFeedView: View {
             .sheet(isPresented: $showSearch) {
                 SearchView(isPresented: $showSearch)
             }
+            .navigationDestination(item: $postFromNotification) { post in
+                PostDetailView(post: post)
+            }
         }
         .task {
             await viewModel.loadInitialPosts()
@@ -120,24 +122,6 @@ struct MainFeedView: View {
             default:
                 break
             }
-        }
-        // Handle notification tap deep-linking
-        .onChange(of: notificationManager.pendingPostId) { _, postId in
-            guard let postId = postId else { return }
-            // Clear the pending ID
-            notificationManager.pendingPostId = nil
-            // Fetch the post and navigate to it
-            Task {
-                do {
-                    let post = try await APIClient.shared.getPost(id: postId)
-                    postFromNotification = post
-                } catch {
-                    // Post might not exist anymore, just ignore
-                }
-            }
-        }
-        .navigationDestination(item: $postFromNotification) { post in
-            PostDetailView(post: post)
         }
     }
 }
@@ -442,5 +426,5 @@ struct CaughtUpBanner: View {
 }
 
 #Preview {
-    MainFeedView()
+    MainFeedView(postFromNotification: .constant(nil))
 }

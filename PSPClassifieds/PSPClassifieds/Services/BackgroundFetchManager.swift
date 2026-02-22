@@ -29,15 +29,23 @@ class BackgroundFetchManager {
     
     /// Schedule the next background refresh. Call after each refresh completes.
     func scheduleAppRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: Self.taskIdentifier)
-        // Request to run no earlier than 15 minutes from now
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
-        
-        do {
-            try BGTaskScheduler.shared.submit(request)
-            logger.info("Background refresh scheduled for ~15 minutes from now")
-        } catch {
-            logger.error("Failed to schedule background refresh: \(error.localizedDescription)")
+        BGTaskScheduler.shared.getPendingTaskRequests { [self] requests in
+            let alreadyScheduled = requests.contains { $0.identifier == Self.taskIdentifier }
+            if alreadyScheduled {
+                logger.debug("Background refresh already scheduled, skipping")
+                return
+            }
+            
+            let request = BGAppRefreshTaskRequest(identifier: Self.taskIdentifier)
+            // Request to run no earlier than 15 minutes from now
+            request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+            
+            do {
+                try BGTaskScheduler.shared.submit(request)
+                logger.info("Background refresh scheduled for ~15 minutes from now")
+            } catch {
+                logger.error("Failed to schedule background refresh: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -48,6 +56,14 @@ class BackgroundFetchManager {
         
         // Schedule the next refresh
         scheduleAppRefresh()
+        
+        // Track completion to prevent calling setTaskCompleted twice
+        var isCompleted = false
+        let complete: (Bool) -> Void = { success in
+            guard !isCompleted else { return }
+            isCompleted = true
+            task.setTaskCompleted(success: success)
+        }
         
         // Create a task to fetch posts
         let fetchTask = Task {
@@ -62,10 +78,10 @@ class BackgroundFetchManager {
                 await cache.cachePosts(response.messages, for: .all)
                 
                 logger.info("Background refresh completed successfully")
-                task.setTaskCompleted(success: true)
+                complete(true)
             } catch {
                 logger.error("Background refresh failed: \(error.localizedDescription)")
-                task.setTaskCompleted(success: false)
+                complete(false)
             }
         }
         
@@ -73,6 +89,7 @@ class BackgroundFetchManager {
         task.expirationHandler = {
             logger.warning("Background refresh task expired")
             fetchTask.cancel()
+            complete(false)
         }
     }
 }
