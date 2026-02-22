@@ -41,6 +41,10 @@ class DeviceRegistration(BaseModel):
         default=False,
         description="If true, receive notifications for ALL new posts"
     )
+    notify_summary: bool = Field(
+        default=False,
+        description="If true, receive a single summary notification instead of individual ones"
+    )
 
 
 class DeviceResponse(BaseModel):
@@ -51,6 +55,7 @@ class DeviceResponse(BaseModel):
     environment: str
     search_filters: list[str] | None
     notify_all: bool
+    notify_summary: bool
     enabled: bool
     created_at: datetime
     updated_at: datetime
@@ -67,6 +72,10 @@ class DeviceUpdateRequest(BaseModel):
         default=None,
         description="If true, receive notifications for ALL new posts (null = don't change)"
     )
+    notify_summary: bool | None = Field(
+        default=None,
+        description="If true, receive summary notifications (null = don't change)"
+    )
     enabled: bool | None = Field(
         default=None,
         description="Master on/off switch for notifications (null = don't change)"
@@ -81,6 +90,7 @@ def _row_to_response(row) -> DeviceResponse:
         environment=row["environment"],
         search_filters=row["search_filters"],
         notify_all=row["notify_all"],
+        notify_summary=row["notify_summary"],
         enabled=row["enabled"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -97,6 +107,7 @@ async def register_device(request: Request, body: DeviceRegistration):
     
     **Notification behavior**:
     - `notify_all = true`: Receive notifications for ALL new posts
+    - `notify_summary = true`: Receive a single summary notification per fetch cycle
     - `notify_all = false` with `search_filters`: Only notify when posts match search terms
     - `notify_all = false` with no `search_filters`: No notifications
     
@@ -128,21 +139,23 @@ async def register_device(request: Request, body: DeviceRegistration):
     # Upsert the device token
     row = await db.fetchrow(
         """
-        INSERT INTO device_tokens (token, platform, environment, search_filters, notify_all, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $6)
+        INSERT INTO device_tokens (token, platform, environment, search_filters, notify_all, notify_summary, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
         ON CONFLICT (token) DO UPDATE SET
             platform = EXCLUDED.platform,
             environment = EXCLUDED.environment,
             search_filters = EXCLUDED.search_filters,
             notify_all = EXCLUDED.notify_all,
+            notify_summary = EXCLUDED.notify_summary,
             updated_at = EXCLUDED.updated_at
-        RETURNING token, platform, environment, search_filters, notify_all, enabled, created_at, updated_at
+        RETURNING token, platform, environment, search_filters, notify_all, notify_summary, enabled, created_at, updated_at
         """,
         body.token,
         body.platform,
         body.environment,
         search_filters,
         body.notify_all,
+        body.notify_summary,
         now,
     )
     
@@ -153,6 +166,7 @@ async def register_device(request: Request, body: DeviceRegistration):
             "platform": body.platform,
             "environment": body.environment,
             "notify_all": body.notify_all,
+            "notify_summary": body.notify_summary,
             "search_filter_count": len(search_filters) if search_filters else 0,
         },
     )
@@ -172,7 +186,7 @@ async def get_device(request: Request, token: str):
     
     row = await db.fetchrow(
         """
-        SELECT token, platform, environment, search_filters, notify_all, enabled, created_at, updated_at
+        SELECT token, platform, environment, search_filters, notify_all, notify_summary, enabled, created_at, updated_at
         FROM device_tokens
         WHERE token = $1
         """,
@@ -210,6 +224,7 @@ async def update_device(request: Request, token: str, body: DeviceUpdateRequest)
     # Determine new values (use current if not provided)
     new_enabled = body.enabled if body.enabled is not None else current["enabled"]
     new_notify_all = body.notify_all if body.notify_all is not None else current["notify_all"]
+    new_notify_summary = body.notify_summary if body.notify_summary is not None else current["notify_summary"]
     
     # Handle search_filters: None means don't change, [] means clear
     if body.search_filters is None:
@@ -227,14 +242,16 @@ async def update_device(request: Request, token: str, body: DeviceUpdateRequest)
         UPDATE device_tokens
         SET search_filters = $2,
             notify_all = $3,
-            enabled = $4,
-            updated_at = $5
+            notify_summary = $4,
+            enabled = $5,
+            updated_at = $6
         WHERE token = $1
-        RETURNING token, platform, environment, search_filters, notify_all, enabled, created_at, updated_at
+        RETURNING token, platform, environment, search_filters, notify_all, notify_summary, enabled, created_at, updated_at
         """,
         token,
         new_search_filters,
         new_notify_all,
+        new_notify_summary,
         new_enabled,
         now,
     )
@@ -245,6 +262,7 @@ async def update_device(request: Request, token: str, body: DeviceUpdateRequest)
             "token_prefix": token[:8],
             "enabled": new_enabled,
             "notify_all": new_notify_all,
+            "notify_summary": new_notify_summary,
             "search_filter_count": len(new_search_filters) if new_search_filters else 0,
         },
     )

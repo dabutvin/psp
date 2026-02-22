@@ -12,6 +12,7 @@ struct NotificationsView: View {
                 masterSwitchSection
                 
                 if notificationManager.notificationsEnabled {
+                    summarySection
                     allPostsSection
                     
                     if !notificationManager.notifyAll {
@@ -48,6 +49,21 @@ struct NotificationsView: View {
             .accessibilityHint("Turn off to stop all notifications from PSP Classifieds")
         } footer: {
             Text("Turn off to stop all notifications from PSP Classifieds")
+        }
+    }
+    
+    private var summarySection: some View {
+        Section {
+            Toggle("Summary", isOn: Binding(
+                get: { notificationManager.notifySummary },
+                set: { newValue in
+                    Task { await notificationManager.setNotifySummary(newValue) }
+                }
+            ))
+            .accessibilityLabel("Summary notifications toggle")
+            .accessibilityHint("When enabled, you'll receive a single notification summarizing all new posts")
+        } footer: {
+            Text("Get a single notification summarizing all new posts")
         }
     }
     

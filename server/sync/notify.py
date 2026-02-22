@@ -325,3 +325,153 @@ def send_new_post_notifications_sync(messages: list[dict]) -> int:
     except RuntimeError:
         # No running loop - safe to use asyncio.run()
         return asyncio.run(send_new_post_notifications(messages))
+
+
+async def get_summary_devices(db) -> list[dict]:
+    """
+    Get all devices that have summary notifications enabled.
+    
+    Returns:
+        List of dicts with 'token' and 'environment' keys
+    """
+    rows = await db.fetch("""
+        SELECT token, environment
+        FROM device_tokens
+        WHERE enabled = TRUE AND notify_summary = TRUE
+    """)
+    return [{"token": row["token"], "environment": row["environment"]} for row in rows]
+
+
+def _build_summary_body(messages: list[dict], max_length: int = 100) -> str:
+    """
+    Build a summary body text from a list of messages.
+    
+    Truncates subjects and adds ellipsis if the combined text exceeds max_length.
+    
+    Args:
+        messages: List of message dicts with 'subject' key
+        max_length: Maximum length of the resulting body text
+    
+    Returns:
+        Summary body like "FS: Stroller, FF: Books, ISO: Crib..."
+    """
+    if not messages:
+        return "Tap to view"
+    
+    subjects = []
+    current_length = 0
+    
+    for msg in messages:
+        subject = msg.get("subject", "New Post")
+        # Truncate individual subjects to keep them reasonable
+        if len(subject) > 40:
+            subject = subject[:37] + "..."
+        
+        # Check if adding this subject would exceed the limit
+        separator = ", " if subjects else ""
+        needed_length = len(separator) + len(subject)
+        
+        if current_length + needed_length > max_length - 3:  # -3 for "..."
+            break
+        
+        subjects.append(subject)
+        current_length += needed_length
+    
+    result = ", ".join(subjects)
+    
+    # Add ellipsis if we didn't include all messages
+    if len(subjects) < len(messages):
+        result += "..."
+    
+    return result if result else "Tap to view"
+
+
+async def send_summary_notifications(messages: list[dict]) -> int:
+    """
+    Send summary push notifications to devices with notify_summary enabled.
+    
+    Sends a single notification per device containing a summary of all new posts.
+    
+    Args:
+        messages: List of message dicts with keys: id, subject, hashtags (list of names)
+    
+    Returns:
+        Number of notifications sent successfully
+    """
+    if not messages:
+        return 0
+    
+    config = APNsConfig.from_settings()
+    if not config:
+        logger.debug("APNs not configured, skipping summary notifications")
+        return 0
+    
+    db = get_database()
+    await db.connect()
+    
+    devices = await get_summary_devices(db)
+    
+    if not devices:
+        logger.debug("No devices subscribed to summary notifications")
+        return 0
+    
+    logger.info(f"Sending summary notifications to {len(devices)} devices for {len(messages)} posts")
+    
+    # Build the summary notification content
+    count = len(messages)
+    title = f"{count} new post{'s' if count != 1 else ''}"
+    body = _build_summary_body(messages)
+    
+    # Include all post IDs in the data payload
+    post_ids = [msg["id"] for msg in messages]
+    data = {
+        "type": "summary",
+        "post_ids": post_ids,
+    }
+    
+    sent_count = 0
+    expired_tokens: list[str] = []
+    
+    async with APNsClient(config) as client:
+        semaphore = asyncio.Semaphore(APNsClient.MAX_CONCURRENT_SENDS)
+        
+        async def send_one(device: dict) -> NotificationResult:
+            async with semaphore:
+                return await client.send_notification(
+                    device_token=device["token"],
+                    title=title,
+                    body=body,
+                    data=data,
+                    environment=device["environment"],
+                )
+        
+        results = await asyncio.gather(*[send_one(device) for device in devices])
+        
+        for result in results:
+            if result.success:
+                sent_count += 1
+            elif result.expired:
+                expired_tokens.append(result.token)
+    
+    # Remove expired tokens from database
+    if expired_tokens:
+        logger.info(f"Removing {len(expired_tokens)} expired device tokens")
+        for token in expired_tokens:
+            await remove_device_token(db, token)
+    
+    logger.info(f"Sent {sent_count} summary notifications")
+    return sent_count
+
+
+def send_summary_notifications_sync(messages: list[dict]) -> int:
+    """
+    Synchronous wrapper for send_summary_notifications.
+    
+    Use this from synchronous code (like fetch.py).
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        logger.warning("Cannot run async summary notification from running loop")
+        return 0
+    except RuntimeError:
+        return asyncio.run(send_summary_notifications(messages))

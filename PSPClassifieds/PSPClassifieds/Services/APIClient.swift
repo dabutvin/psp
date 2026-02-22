@@ -188,7 +188,8 @@ actor APIClient {
             #endif
         }(),
         searchFilters: [String]? = nil,
-        notifyAll: Bool = false
+        notifyAll: Bool = false,
+        notifySummary: Bool = false
     ) async throws {
         guard let url = URL(string: "\(baseURL)/devices") else {
             throw APIError.invalidURL
@@ -198,7 +199,8 @@ actor APIClient {
             "token": token,
             "platform": platform,
             "environment": environment,
-            "notify_all": notifyAll
+            "notify_all": notifyAll,
+            "notify_summary": notifySummary
         ]
         
         if let filters = searchFilters {
@@ -221,11 +223,13 @@ actor APIClient {
     ///   - token: Device token
     ///   - searchFilters: Search filters to set. Pass `nil` to not change, pass empty array `[]` to clear.
     ///   - notifyAll: Whether to notify for all posts
+    ///   - notifySummary: Whether to receive summary notifications
     ///   - enabled: Master notification switch
     func updateDevice(
         token: String,
         searchFilters: [String]?,
         notifyAll: Bool,
+        notifySummary: Bool,
         enabled: Bool
     ) async throws {
         guard let url = URL(string: "\(baseURL)/devices/\(token)") else {
@@ -234,7 +238,8 @@ actor APIClient {
         
         var body: [String: Any] = [
             "enabled": enabled,
-            "notify_all": notifyAll
+            "notify_all": notifyAll,
+            "notify_summary": notifySummary
         ]
         
         // Only include search_filters if explicitly provided

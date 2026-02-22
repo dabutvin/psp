@@ -84,12 +84,16 @@ CREATE TABLE IF NOT EXISTS device_tokens (
     environment TEXT DEFAULT 'production', -- 'production' or 'sandbox'
     search_filters TEXT[],                -- Array of search terms to match (max 20, each max 100 chars)
     notify_all BOOLEAN DEFAULT FALSE,     -- If true, notify for ALL new posts
+    notify_summary BOOLEAN DEFAULT FALSE, -- If true, send summary notification instead of individual ones
     enabled BOOLEAN DEFAULT TRUE,         -- Master on/off switch for notifications
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_device_tokens_enabled ON device_tokens(enabled) WHERE enabled = TRUE;
+
+-- Migration: Add notify_summary column if it doesn't exist
+ALTER TABLE device_tokens ADD COLUMN IF NOT EXISTS notify_summary BOOLEAN DEFAULT FALSE;
 """
 
 # Full-text search setup (run after initial schema)
