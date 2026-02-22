@@ -27,6 +27,9 @@ class NotificationManager: NSObject, ObservableObject {
     /// Whether to notify for ALL new posts
     @Published private(set) var notifyAll: Bool = false
     
+    /// Whether to receive summary notifications instead of individual ones
+    @Published private(set) var notifySummary: Bool = false
+    
     /// Master on/off switch for notifications
     @Published private(set) var notificationsEnabled: Bool = true
     
@@ -38,6 +41,7 @@ class NotificationManager: NSObject, ObservableObject {
     private let api = APIClient.shared
     private let userDefaultsKeySearchFilters = "notification_search_filters"
     private let userDefaultsKeyNotifyAll = "notification_notify_all"
+    private let userDefaultsKeyNotifySummary = "notification_notify_summary"
     private let userDefaultsKeyEnabled = "notification_enabled"
     
     // MARK: - Initialization
@@ -150,6 +154,14 @@ class NotificationManager: NSObject, ObservableObject {
         await syncWithServer()
     }
     
+    /// Set whether to receive summary notifications
+    func setNotifySummary(_ value: Bool) async {
+        guard notifySummary != value else { return }
+        notifySummary = value
+        persistLocally()
+        await syncWithServer()
+    }
+    
     /// Set master notifications enabled/disabled
     func setNotificationsEnabled(_ value: Bool) async {
         guard notificationsEnabled != value else { return }
@@ -174,6 +186,7 @@ class NotificationManager: NSObject, ObservableObject {
             let device = try await api.getDevice(token: token)
             searchFilters = device.searchFilters ?? []
             notifyAll = device.notifyAll
+            notifySummary = device.notifySummary
             notificationsEnabled = device.enabled
             persistLocally()
             logger.info("Fetched device settings from server")
@@ -187,13 +200,15 @@ class NotificationManager: NSObject, ObservableObject {
     private func loadFromLocal() {
         searchFilters = UserDefaults.standard.stringArray(forKey: userDefaultsKeySearchFilters) ?? []
         notifyAll = UserDefaults.standard.bool(forKey: userDefaultsKeyNotifyAll)
+        notifySummary = UserDefaults.standard.bool(forKey: userDefaultsKeyNotifySummary)
         notificationsEnabled = UserDefaults.standard.object(forKey: userDefaultsKeyEnabled) as? Bool ?? true
-        logger.debug("Loaded from local: \(self.searchFilters.count) filters, notifyAll=\(self.notifyAll), enabled=\(self.notificationsEnabled)")
+        logger.debug("Loaded from local: \(self.searchFilters.count) filters, notifyAll=\(self.notifyAll), notifySummary=\(self.notifySummary), enabled=\(self.notificationsEnabled)")
     }
     
     private func persistLocally() {
         UserDefaults.standard.set(searchFilters, forKey: userDefaultsKeySearchFilters)
         UserDefaults.standard.set(notifyAll, forKey: userDefaultsKeyNotifyAll)
+        UserDefaults.standard.set(notifySummary, forKey: userDefaultsKeyNotifySummary)
         UserDefaults.standard.set(notificationsEnabled, forKey: userDefaultsKeyEnabled)
     }
     
@@ -202,7 +217,8 @@ class NotificationManager: NSObject, ObservableObject {
             try await api.registerDevice(
                 token: token,
                 searchFilters: searchFilters.isEmpty ? nil : searchFilters,
-                notifyAll: notifyAll
+                notifyAll: notifyAll,
+                notifySummary: notifySummary
             )
             logger.info("Device registered with server")
         } catch {
@@ -236,6 +252,7 @@ class NotificationManager: NSObject, ObservableObject {
                     token: token,
                     searchFilters: searchFilters,
                     notifyAll: notifyAll,
+                    notifySummary: notifySummary,
                     enabled: notificationsEnabled
                 )
                 logger.info("Device settings synced with server")

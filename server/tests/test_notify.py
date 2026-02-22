@@ -5,7 +5,7 @@ Tests for sync/notify.py push notification module.
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 
-from sync.notify import send_new_post_notifications, NotificationResult
+from sync.notify import send_new_post_notifications, NotificationResult, _build_summary_body
 
 
 class TestSendNewPostNotifications:
@@ -49,3 +49,53 @@ class TestSendNewPostNotifications:
             ])
         
         assert result == 1
+
+
+class TestBuildSummaryBody:
+    """Tests for _build_summary_body function."""
+
+    def test_empty_messages_returns_tap_to_view(self):
+        """Should return 'Tap to view' for empty message list."""
+        assert _build_summary_body([]) == "Tap to view"
+
+    def test_single_message(self):
+        """Should return just the subject for a single message."""
+        messages = [{"subject": "FS: Stroller"}]
+        assert _build_summary_body(messages) == "FS: Stroller"
+
+    def test_multiple_messages(self):
+        """Should join multiple subjects with commas."""
+        messages = [
+            {"subject": "FS: Stroller"},
+            {"subject": "FF: Books"},
+        ]
+        assert _build_summary_body(messages) == "FS: Stroller, FF: Books"
+
+    def test_truncates_long_subjects(self):
+        """Should truncate individual subjects longer than 40 chars."""
+        messages = [{"subject": "A" * 50}]
+        result = _build_summary_body(messages)
+        assert len(result) <= 40
+        assert result.endswith("...")
+
+    def test_adds_ellipsis_when_truncated(self):
+        """Should add ellipsis when not all messages fit."""
+        messages = [
+            {"subject": "FS: Item One"},
+            {"subject": "FF: Item Two"},
+            {"subject": "ISO: Item Three"},
+            {"subject": "FS: Item Four"},
+            {"subject": "FF: Item Five"},
+        ]
+        result = _build_summary_body(messages, max_length=50)
+        assert result.endswith("...")
+
+    def test_respects_max_length(self):
+        """Should not exceed max_length."""
+        messages = [
+            {"subject": "FS: Stroller"},
+            {"subject": "FF: Books"},
+            {"subject": "ISO: Crib"},
+        ]
+        result = _build_summary_body(messages, max_length=30)
+        assert len(result) <= 30

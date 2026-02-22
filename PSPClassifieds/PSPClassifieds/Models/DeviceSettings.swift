@@ -7,6 +7,7 @@ struct DeviceSettings: Codable {
     let environment: String
     let searchFilters: [String]?
     let notifyAll: Bool
+    let notifySummary: Bool
     let enabled: Bool
     let createdAt: Date
     let updatedAt: Date
@@ -15,6 +16,7 @@ struct DeviceSettings: Codable {
         case token, platform, environment, enabled
         case searchFilters = "search_filters"
         case notifyAll = "notify_all"
+        case notifySummary = "notify_summary"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

@@ -9,7 +9,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 from sync.client import GroupsIOClient, RateLimitError
-from sync.notify import send_new_post_notifications_sync
+from sync.notify import send_new_post_notifications_sync, send_summary_notifications_sync
 from core.config import get_db_url
 from core.logging import get_logger
 from core.models import Message
@@ -141,11 +141,19 @@ def fetch_new_messages(
         ]
         
         if posts_for_notification:
+            # Send individual notifications (for notify_all and search_filters subscribers)
             try:
                 sent = send_new_post_notifications_sync(posts_for_notification)
                 logger.info(f"Sent {sent} push notifications for {len(posts_for_notification)} new posts")
             except Exception as e:
                 logger.error(f"Failed to send push notifications: {e}")
+            
+            # Send summary notifications (for notify_summary subscribers)
+            try:
+                summary_sent = send_summary_notifications_sync(posts_for_notification)
+                logger.info(f"Sent {summary_sent} summary notifications")
+            except Exception as e:
+                logger.error(f"Failed to send summary notifications: {e}")
 
     return total_new
 
