@@ -12,9 +12,7 @@ actor FeedCache {
             .appendingPathComponent("FeedCache", isDirectory: true)
     }
     
-    private init() {
-        createCacheDirectoryIfNeeded()
-    }
+    private init() {}
     
     private func createCacheDirectoryIfNeeded() {
         guard let cacheDir = cacheDirectory else { return }
@@ -31,6 +29,7 @@ actor FeedCache {
     // MARK: - Public API
     
     func cachePosts(_ posts: [Post], for category: Category) {
+        createCacheDirectoryIfNeeded()
         guard let fileURL = cacheFileURL(for: category) else { return }
         
         let postsToCache = Array(posts.prefix(maxCachedPosts))

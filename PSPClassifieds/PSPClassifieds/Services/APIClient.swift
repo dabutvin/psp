@@ -187,7 +187,8 @@ actor APIClient {
             return "production"
             #endif
         }(),
-        hashtagFilters: [String]? = nil
+        searchFilters: [String]? = nil,
+        notifyAll: Bool = false
     ) async throws {
         guard let url = URL(string: "\(baseURL)/devices") else {
             throw APIError.invalidURL
@@ -196,31 +197,50 @@ actor APIClient {
         var body: [String: Any] = [
             "token": token,
             "platform": platform,
-            "environment": environment
+            "environment": environment,
+            "notify_all": notifyAll
         ]
         
-        if let filters = hashtagFilters {
-            body["hashtag_filters"] = filters
+        if let filters = searchFilters {
+            body["search_filters"] = filters
         }
         
         try await post(url: url, body: body)
     }
     
+    func getDevice(token: String) async throws -> DeviceSettings {
+        guard let url = URL(string: "\(baseURL)/devices/\(token)") else {
+            throw APIError.invalidURL
+        }
+        
+        return try await fetch(url: url)
+    }
+    
+    /// Update device settings
+    /// - Parameters:
+    ///   - token: Device token
+    ///   - searchFilters: Search filters to set. Pass `nil` to not change, pass empty array `[]` to clear.
+    ///   - notifyAll: Whether to notify for all posts
+    ///   - enabled: Master notification switch
     func updateDevice(
         token: String,
-        hashtagFilters: [String]?,
+        searchFilters: [String]?,
+        notifyAll: Bool,
         enabled: Bool
     ) async throws {
         guard let url = URL(string: "\(baseURL)/devices/\(token)") else {
             throw APIError.invalidURL
         }
         
-        var body: [String: Any] = ["enabled": enabled]
+        var body: [String: Any] = [
+            "enabled": enabled,
+            "notify_all": notifyAll
+        ]
         
-        if let filters = hashtagFilters {
-            body["hashtag_filters"] = filters
-        } else {
-            body["hashtag_filters"] = NSNull()
+        // Only include search_filters if explicitly provided
+        // nil = don't change, [] = clear all filters
+        if let filters = searchFilters {
+            body["search_filters"] = filters
         }
         
         try await patch(url: url, body: body)

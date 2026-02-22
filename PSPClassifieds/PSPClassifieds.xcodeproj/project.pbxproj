@@ -10,6 +10,8 @@
 		0C50123D2F39035100C51E50 /* SimilarItemsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */; };
 		0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */; };
 		0C5012422F391FA700C51E50 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5012412F391FA700C51E50 /* NotificationManager.swift */; };
+		0CD3F5502F4A6C02004B08A3 /* DeviceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD3F54F2F4A6C02004B08A3 /* DeviceSettings.swift */; };
+		0CD3F5522F4A6C2C004B08A3 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD3F5512F4A6C2C004B08A3 /* NotificationsView.swift */; };
 		A1000001299999990000000A /* PSPClassifiedsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001A /* PSPClassifiedsApp.swift */; };
 		A1000001299999990000000B /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001B /* Post.swift */; };
 		A1000001299999990000000C /* Hashtag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001299999990000001C /* Hashtag.swift */; };
@@ -59,6 +61,8 @@
 		0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarSearchQueryTests.swift; sourceTree = "<group>"; };
 		0C5012402F391B7500C51E50 /* PSPClassifieds.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PSPClassifieds.entitlements; sourceTree = "<group>"; };
 		0C5012412F391FA700C51E50 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		0CD3F54F2F4A6C02004B08A3 /* DeviceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSettings.swift; sourceTree = "<group>"; };
+		0CD3F5512F4A6C2C004B08A3 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		A10000012999999900000001 /* PSPClassifieds.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PSPClassifieds.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000001299999990000001A /* PSPClassifiedsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSPClassifiedsApp.swift; sourceTree = "<group>"; };
 		A1000001299999990000001B /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
@@ -155,6 +159,7 @@
 			children = (
 				A1000001299999990000001B /* Post.swift */,
 				A1000001299999990000001C /* Hashtag.swift */,
+				0CD3F54F2F4A6C02004B08A3 /* DeviceSettings.swift */,
 				A1000001299999990000001D /* Attachment.swift */,
 				A1000001299999990000001E /* Category.swift */,
 				A10000012999999900000070 /* SavedPost.swift */,
@@ -174,6 +179,7 @@
 				A10000012999999900000051 /* FilterSheet.swift */,
 				A10000012999999900000072 /* SavedPostsView.swift */,
 				0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */,
+				0CD3F5512F4A6C2C004B08A3 /* NotificationsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -354,6 +360,8 @@
 				A10000012999999900000016 /* PostDetailView.swift in Sources */,
 				A10000012999999900000017 /* HashtagPill.swift in Sources */,
 				A10000012999999900000018 /* SkeletonLoader.swift in Sources */,
+				0CD3F5502F4A6C02004B08A3 /* DeviceSettings.swift in Sources */,
+				0CD3F5522F4A6C2C004B08A3 /* NotificationsView.swift in Sources */,
 				A10000012999999900000040 /* SearchView.swift in Sources */,
 				A10000012999999900000041 /* FilterSheet.swift in Sources */,
 				A10000012999999900000042 /* SearchViewModel.swift in Sources */,

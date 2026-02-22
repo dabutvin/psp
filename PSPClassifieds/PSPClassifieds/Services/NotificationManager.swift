@@ -5,10 +5,12 @@ import os
 
 private let logger = Logger(subsystem: "com.psp.classifieds", category: "Notifications")
 
-/// Manages push notification registration and handling
+/// Manages push notification registration, subscriptions, and handling
 @MainActor
 class NotificationManager: NSObject, ObservableObject {
     static let shared = NotificationManager()
+    
+    // MARK: - Published Properties
     
     /// Current authorization status
     @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -19,32 +21,34 @@ class NotificationManager: NSObject, ObservableObject {
     /// Post ID to navigate to (set when notification is tapped)
     @Published var pendingPostId: Int?
     
-    /// User's hashtag filter preferences for notifications
-    @Published var hashtagFilters: [String]? {
-        didSet {
-            if oldValue != hashtagFilters {
-                Task { await updateDeviceRegistration() }
-            }
-        }
-    }
+    /// Search terms the user is subscribed to
+    @Published private(set) var searchFilters: [String] = []
     
-    /// Whether notifications are enabled
-    @Published var notificationsEnabled: Bool = true {
-        didSet {
-            if oldValue != notificationsEnabled {
-                Task { await updateDeviceRegistration() }
-            }
-        }
-    }
+    /// Whether to notify for ALL new posts
+    @Published private(set) var notifyAll: Bool = false
+    
+    /// Master on/off switch for notifications
+    @Published private(set) var notificationsEnabled: Bool = true
+    
+    /// Whether we're currently syncing with the server
+    @Published private(set) var isSyncing: Bool = false
+    
+    // MARK: - Private Properties
     
     private let api = APIClient.shared
+    private let userDefaultsKeySearchFilters = "notification_search_filters"
+    private let userDefaultsKeyNotifyAll = "notification_notify_all"
+    private let userDefaultsKeyEnabled = "notification_enabled"
+    
+    // MARK: - Initialization
     
     private override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
+        loadFromLocal()
     }
     
-    // MARK: - Public Methods
+    // MARK: - Public Methods: Authorization
     
     /// Request notification permission and register for remote notifications
     func requestAuthorization() async {
@@ -58,7 +62,6 @@ class NotificationManager: NSObject, ObservableObject {
             await checkAuthorizationStatus()
             
             if granted {
-                // Register for remote notifications on the main thread
                 UIApplication.shared.registerForRemoteNotifications()
             }
         } catch {
@@ -79,9 +82,9 @@ class NotificationManager: NSObject, ObservableObject {
         self.deviceToken = tokenString
         logger.info("Registered for remote notifications: \(tokenString.prefix(8))...")
         
-        // Register with our server
         Task {
             await registerDeviceWithServer(token: tokenString)
+            await fetchFromServer()
         }
     }
     
@@ -99,13 +102,107 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
+    // MARK: - Public Methods: Subscription Management
+    
+    /// Subscribe to a search term
+    func subscribeToSearchTerm(_ term: String) async {
+        // Check notification permission first
+        if authorizationStatus == .notDetermined {
+            await requestAuthorization()
+        }
+        
+        guard authorizationStatus == .authorized else {
+            logger.warning("Cannot subscribe: notifications not authorized")
+            return
+        }
+        
+        let normalized = term.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !normalized.isEmpty else { return }
+        guard !searchFilters.contains(normalized) else {
+            logger.debug("Already subscribed to '\(normalized)'")
+            return
+        }
+        
+        searchFilters.append(normalized)
+        persistLocally()
+        await syncWithServer()
+    }
+    
+    /// Unsubscribe from a search term
+    func unsubscribeFromSearchTerm(_ term: String) async {
+        let normalized = term.trimmingCharacters(in: .whitespaces).lowercased()
+        searchFilters.removeAll { $0 == normalized }
+        persistLocally()
+        await syncWithServer()
+    }
+    
+    /// Check if subscribed to a search term
+    func isSubscribed(to term: String) -> Bool {
+        let normalized = term.trimmingCharacters(in: .whitespaces).lowercased()
+        return searchFilters.contains(normalized)
+    }
+    
+    /// Set whether to notify for all posts
+    func setNotifyAll(_ value: Bool) async {
+        guard notifyAll != value else { return }
+        notifyAll = value
+        persistLocally()
+        await syncWithServer()
+    }
+    
+    /// Set master notifications enabled/disabled
+    func setNotificationsEnabled(_ value: Bool) async {
+        guard notificationsEnabled != value else { return }
+        notificationsEnabled = value
+        persistLocally()
+        await syncWithServer()
+    }
+    
+    // MARK: - Public Methods: Sync
+    
+    /// Fetch current settings from server and update local state
+    func fetchFromServer() async {
+        guard let token = deviceToken else {
+            logger.debug("No device token, skipping server fetch")
+            return
+        }
+        
+        isSyncing = true
+        defer { isSyncing = false }
+        
+        do {
+            let device = try await api.getDevice(token: token)
+            searchFilters = device.searchFilters ?? []
+            notifyAll = device.notifyAll
+            notificationsEnabled = device.enabled
+            persistLocally()
+            logger.info("Fetched device settings from server")
+        } catch {
+            logger.error("Failed to fetch device settings: \(error.localizedDescription)")
+        }
+    }
+    
     // MARK: - Private Methods
+    
+    private func loadFromLocal() {
+        searchFilters = UserDefaults.standard.stringArray(forKey: userDefaultsKeySearchFilters) ?? []
+        notifyAll = UserDefaults.standard.bool(forKey: userDefaultsKeyNotifyAll)
+        notificationsEnabled = UserDefaults.standard.object(forKey: userDefaultsKeyEnabled) as? Bool ?? true
+        logger.debug("Loaded from local: \(self.searchFilters.count) filters, notifyAll=\(self.notifyAll), enabled=\(self.notificationsEnabled)")
+    }
+    
+    private func persistLocally() {
+        UserDefaults.standard.set(searchFilters, forKey: userDefaultsKeySearchFilters)
+        UserDefaults.standard.set(notifyAll, forKey: userDefaultsKeyNotifyAll)
+        UserDefaults.standard.set(notificationsEnabled, forKey: userDefaultsKeyEnabled)
+    }
     
     private func registerDeviceWithServer(token: String) async {
         do {
             try await api.registerDevice(
                 token: token,
-                hashtagFilters: hashtagFilters
+                searchFilters: searchFilters.isEmpty ? nil : searchFilters,
+                notifyAll: notifyAll
             )
             logger.info("Device registered with server")
         } catch {
@@ -113,19 +210,41 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
-    private func updateDeviceRegistration() async {
-        guard let token = deviceToken else { return }
-        
-        do {
-            try await api.updateDevice(
-                token: token,
-                hashtagFilters: hashtagFilters,
-                enabled: notificationsEnabled
-            )
-            logger.info("Device registration updated")
-        } catch {
-            logger.error("Failed to update device registration: \(error.localizedDescription)")
+    private var syncTask: Task<Void, Never>?
+    private let syncDebounceInterval: TimeInterval = 0.5
+    
+    private func syncWithServer() async {
+        guard let token = deviceToken else {
+            logger.debug("No device token, skipping sync")
+            return
         }
+        
+        // Cancel any pending sync and debounce
+        syncTask?.cancel()
+        
+        syncTask = Task {
+            try? await Task.sleep(nanoseconds: UInt64(syncDebounceInterval * 1_000_000_000))
+            
+            guard !Task.isCancelled else { return }
+            
+            isSyncing = true
+            defer { isSyncing = false }
+            
+            do {
+                // Always send searchFilters to sync full state with server
+                try await api.updateDevice(
+                    token: token,
+                    searchFilters: searchFilters,
+                    notifyAll: notifyAll,
+                    enabled: notificationsEnabled
+                )
+                logger.info("Device settings synced with server")
+            } catch {
+                logger.error("Failed to sync with server: \(error.localizedDescription)")
+            }
+        }
+        
+        await syncTask?.value
     }
 }
 
@@ -138,7 +257,6 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         logger.info("Received notification in foreground")
-        // Show banner even when app is open
         return [.banner, .sound, .badge]
     }
     
@@ -150,7 +268,6 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         logger.info("Notification tapped: \(userInfo)")
         
-        // Extract post ID from notification payload
         if let postId = userInfo["post_id"] as? Int {
             await MainActor.run {
                 self.pendingPostId = postId
