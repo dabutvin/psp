@@ -42,6 +42,7 @@ def fetch_new_messages(
     total_new = 0
     page_token = None
     all_new_messages: list[Message] = []  # Collect for notifications
+    message_ids: list[int] = []  # Track IDs from last batch for sync state update
 
     with psycopg2.connect(db_url) as conn:
         with conn.cursor() as cur:
@@ -107,16 +108,18 @@ def fetch_new_messages(
 
                 page_token = response.next_page_token
 
-            # Update sync state
-            if total_new > 0 and not dry_run:
+            # Update sync state - always update last_fetch_at on successful fetch
+            # (even with 0 new messages) so monitoring knows the fetcher is running
+            if not dry_run:
+                newest_id = message_ids[0] if message_ids and total_new > 0 else None
                 cur.execute(
                     """
                     UPDATE sync_state 
                     SET last_fetch_at = %s,
-                        newest_message_id = GREATEST(newest_message_id, %s)
+                        newest_message_id = COALESCE(GREATEST(newest_message_id, %s), newest_message_id)
                     WHERE id = 1
                     """,
-                    (datetime.now(timezone.utc), message_ids[0] if message_ids else None),
+                    (datetime.now(timezone.utc), newest_id),
                 )
 
         if not dry_run:

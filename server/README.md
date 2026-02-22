@@ -181,6 +181,11 @@ On Fly.io:
 fly ssh console -a psp-api -C "uv run python cli.py migrate"
 ```
 
+To run the full schema initialization (safe to run on existing databases - uses `IF NOT EXISTS`):
+```bash
+fly ssh console -C "sh -c 'cd /app && /app/.venv/bin/python -m core.database'"
+```
+
 ## Project Structure
 
 ```
