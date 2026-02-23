@@ -43,7 +43,7 @@ struct MainFeedView: View {
                 }
                 
                 // Posts List
-                PostsList(viewModel: viewModel, shouldScrollToTopAndRefresh: $shouldScrollToTopOnReturn)
+                PostsList(viewModel: viewModel, shouldScrollToTopAndRefresh: $shouldScrollToTopOnReturn, postFromNotification: $postFromNotification)
             }
             .navigationTitle("PSP Classifieds")
             .navigationBarTitleDisplayMode(.inline)
@@ -97,9 +97,6 @@ struct MainFeedView: View {
             }
             .sheet(isPresented: $showSearch) {
                 SearchView(isPresented: $showSearch)
-            }
-            .navigationDestination(item: $postFromNotification) { post in
-                PostDetailView(post: post)
             }
         }
         .task {
@@ -232,6 +229,7 @@ struct FilterChip: View {
 struct PostsList: View {
     let viewModel: FeedViewModel
     @Binding var shouldScrollToTopAndRefresh: Bool
+    @Binding var postFromNotification: Post?
     @State private var showScrollToTop = false
     @State private var visibleIndices: Set<Int> = []
     @State private var selectedPost: Post?
@@ -343,6 +341,18 @@ struct PostsList: View {
             }
             .navigationDestination(item: $selectedPost) { post in
                 PostPagerView(viewModel: viewModel, initialPost: post, lastViewedPostId: $lastViewedPostId)
+            }
+            .onChange(of: postFromNotification) { _, post in
+                guard let post else { return }
+                postFromNotification = nil
+                if selectedPost != nil {
+                    selectedPost = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        selectedPost = post
+                    }
+                } else {
+                    selectedPost = post
+                }
             }
             .onChange(of: selectedPost) { oldValue, newValue in
                 if let post = newValue {

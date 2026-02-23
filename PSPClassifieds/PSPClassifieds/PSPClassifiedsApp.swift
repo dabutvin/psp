@@ -114,7 +114,7 @@ struct ContentView: View {
             guard let postId = postId else { return }
             notificationManager.pendingPostId = nil
             
-            Task {
+            Task { @MainActor in
                 if let post = try? await APIClient.shared.getPost(id: postId) {
                     selectedTab = 0
                     postFromNotification = post
