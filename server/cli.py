@@ -183,10 +183,41 @@ def cmd_backfill(args):
 def cmd_test_notify(args):
     """Send a test push notification to a registered device."""
     import asyncio
-    from sync.notify import APNsConfig, APNsClient
+    from sync.notify import APNsConfig, APNsClient, send_new_post_notifications, send_summary_notifications
     from core.database import get_database
 
-    async def _send():
+    async def _send_summary():
+        """Test the full summary notification code path."""
+        db = get_database()
+        await db.connect()
+
+        count = args.count
+        rows = await db.fetch(
+            "SELECT id, subject FROM messages ORDER BY id DESC LIMIT $1", count
+        )
+        if not rows:
+            print("Error: No messages in database.")
+            sys.exit(1)
+
+        messages = [
+            {"id": row["id"], "subject": row["subject"], "hashtags": []}
+            for row in rows
+        ]
+
+        print(f"Sending summary notification for {len(messages)} posts:")
+        for msg in messages:
+            print(f"  - [{msg['id']}] {msg['subject'][:60]}")
+
+        sent = await send_summary_notifications(messages)
+        print(f"\nSent {sent} summary notification(s).")
+
+        if sent == 0:
+            print("Hint: Make sure your device has notify_summary = TRUE in the database.")
+
+        await db.disconnect()
+
+    async def _send_individual():
+        """Test a single individual notification."""
         config = APNsConfig.from_settings()
         if not config:
             print("Error: APNs not configured. Set APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, and APNS_KEY_PATH or APNS_KEY_CONTENT.")
@@ -264,7 +295,10 @@ def cmd_test_notify(args):
 
         await db.disconnect()
 
-    asyncio.run(_send())
+    if args.summary:
+        asyncio.run(_send_summary())
+    else:
+        asyncio.run(_send_individual())
 
 
 def cmd_serve(args):
@@ -440,6 +474,14 @@ def main():
         "--environment", type=str, default="production",
         choices=["production", "sandbox"],
         help="APNs environment (default: production)"
+    )
+    test_notify_parser.add_argument(
+        "--summary", action="store_true",
+        help="Send a summary notification instead of an individual one"
+    )
+    test_notify_parser.add_argument(
+        "--count", type=int, default=3,
+        help="Number of recent posts to include in summary (default: 3)"
     )
     test_notify_parser.set_defaults(func=cmd_test_notify)
 
