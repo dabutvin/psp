@@ -271,25 +271,32 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
     /// Handle notification when app is in foreground
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
         logger.info("Received notification in foreground")
-        return [.banner, .sound, .badge]
+        completionHandler([.banner, .sound, .badge])
     }
     
     /// Handle notification tap
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let userInfo = response.notification.request.content.userInfo
         logger.info("Notification tapped: \(userInfo)")
         
-        if let postId = userInfo["post_id"] as? Int {
-            await MainActor.run {
+        let rawValue = userInfo["post_id"]
+        let postId: Int? = (rawValue as? Int) ?? (rawValue as? String).flatMap(Int.init)
+        
+        if let postId {
+            DispatchQueue.main.async {
                 self.pendingPostId = postId
+                logger.info("Set pending post ID: \(postId)")
             }
-            logger.info("Set pending post ID: \(postId)")
         }
+        
+        completionHandler()
     }
 }

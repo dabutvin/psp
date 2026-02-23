@@ -180,6 +180,93 @@ def cmd_backfill(args):
             print("Backfill paused - run again to continue.")
 
 
+def cmd_test_notify(args):
+    """Send a test push notification to a registered device."""
+    import asyncio
+    from sync.notify import APNsConfig, APNsClient
+    from core.database import get_database
+
+    async def _send():
+        config = APNsConfig.from_settings()
+        if not config:
+            print("Error: APNs not configured. Set APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, and APNS_KEY_PATH or APNS_KEY_CONTENT.")
+            sys.exit(1)
+
+        db = get_database()
+        await db.connect()
+
+        if args.token:
+            token = args.token
+            environment = args.environment
+        else:
+            row = await db.fetchrow(
+                "SELECT token, environment FROM device_tokens WHERE enabled = TRUE ORDER BY updated_at DESC LIMIT 1"
+            )
+            if not row:
+                print("Error: No registered devices found. Pass --token explicitly.")
+                sys.exit(1)
+            token = row["token"]
+            environment = row["environment"]
+            print(f"Using most recently updated device: {token[:8]}... ({environment})")
+
+        post_id = args.post_id
+        if not post_id:
+            row = await db.fetchrow("SELECT id FROM messages ORDER BY id DESC LIMIT 1")
+            if row:
+                post_id = row["id"]
+                print(f"Using latest post ID: {post_id}")
+            else:
+                post_id = 1
+                print(f"No posts in DB, using post_id={post_id}")
+
+        title = "Test Notification"
+        body = f"Tap to open post {post_id}"
+        data = {"post_id": post_id}
+
+        print(f"Sending to {token[:8]}... ({environment})")
+        print(f"  Payload: post_id={post_id}")
+
+        import httpx
+        base_url = "https://api.push.apple.com" if environment == "production" else "https://api.sandbox.push.apple.com"
+        url = f"{base_url}/3/device/{token}"
+
+        payload = {
+            "aps": {
+                "alert": {"title": title, "body": body},
+                "sound": "default",
+                "badge": 1,
+            },
+            **data,
+        }
+
+        async with APNsClient(config) as client:
+            jwt_token = client._get_token()
+
+        headers = {
+            "authorization": f"bearer {jwt_token}",
+            "apns-topic": config.bundle_id,
+            "apns-push-type": "alert",
+            "apns-priority": "10",
+        }
+
+        print(f"  URL: {url}")
+        async with httpx.AsyncClient(http2=True, timeout=30.0) as http:
+            response = await http.post(url, json=payload, headers=headers)
+
+        print(f"  Status: {response.status_code}")
+        if response.content:
+            print(f"  Response: {response.text}")
+
+        if response.status_code == 200:
+            print("Sent successfully!")
+        else:
+            print("Failed.")
+
+        await db.disconnect()
+
+    asyncio.run(_send())
+
+
 def cmd_serve(args):
     """Start the API server."""
     from server import run_server
@@ -335,6 +422,26 @@ def main():
         help="Verbose output",
     )
     backfill_parser.set_defaults(func=cmd_backfill)
+
+    # test-notify command
+    test_notify_parser = subparsers.add_parser(
+        "test-notify",
+        help="Send a test push notification to a device",
+        description="Send a test notification with a post_id payload. "
+                    "Defaults to the most recently updated device and the latest post.",
+    )
+    test_notify_parser.add_argument(
+        "--token", type=str, default=None, help="Device token (default: most recently updated device)"
+    )
+    test_notify_parser.add_argument(
+        "--post-id", type=int, default=None, help="Post ID to include in payload (default: latest post)"
+    )
+    test_notify_parser.add_argument(
+        "--environment", type=str, default="production",
+        choices=["production", "sandbox"],
+        help="APNs environment (default: production)"
+    )
+    test_notify_parser.set_defaults(func=cmd_test_notify)
 
     # serve command
     serve_parser = subparsers.add_parser("serve", help="Start API server")
