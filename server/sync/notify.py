@@ -475,3 +475,25 @@ def send_summary_notifications_sync(messages: list[dict]) -> int:
         return 0
     except RuntimeError:
         return asyncio.run(send_summary_notifications(messages))
+
+
+async def _send_all_notifications(messages: list[dict]) -> tuple[int, int]:
+    """Send both individual and summary notifications in a single async context."""
+    individual_sent = await send_new_post_notifications(messages)
+    summary_sent = await send_summary_notifications(messages)
+    return individual_sent, summary_sent
+
+
+def send_all_notifications_sync(messages: list[dict]) -> tuple[int, int]:
+    """
+    Send both individual and summary notifications from synchronous code.
+    
+    Runs both in a single asyncio.run() so they share the same event loop
+    and database connection pool.
+    """
+    try:
+        asyncio.get_running_loop()
+        logger.warning("Cannot run async notifications from running loop")
+        return 0, 0
+    except RuntimeError:
+        return asyncio.run(_send_all_notifications(messages))
