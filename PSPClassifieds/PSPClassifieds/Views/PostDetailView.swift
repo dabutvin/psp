@@ -387,11 +387,13 @@ struct HTMLTextView: View {
     /// Collapse runs of whitespace for readable output
     static func collapseWhitespace(_ text: String) -> String {
         var s = text
-        // Trim each line first so whitespace-only lines become empty
         s = s.components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .init(charactersIn: " \t\u{00A0}")) }
+            .map { line in
+                var l = line.trimmingCharacters(in: .init(charactersIn: " \t\u{00A0}"))
+                l = l.replacingOccurrences(of: "[ \\t\\x{00A0}]{2,}", with: " ", options: .regularExpression)
+                return l
+            }
             .joined(separator: "\n")
-        // Now collapse consecutive blank lines (3+ newlines → 2)
         s = s.replacingOccurrences(of: "\\n{3,}", with: "\n\n", options: .regularExpression)
         s = s.trimmingCharacters(in: .whitespacesAndNewlines)
         return s
