@@ -2,8 +2,7 @@ name: Monitor
 
 on:
   schedule:
-    # Run every 2 hours
-    - cron: "0 */2 * * *"
+    - cron: "*/5 * * * *"
 
   workflow_dispatch: # Allow manual trigger
 
@@ -17,6 +16,7 @@ jobs:
         run: |
           RESPONSE=$(curl -sf "https://psp-api.fly.dev/api/v1/stats" 2>&1) || {
             echo "🚨 API is down or unreachable"
+            echo "fetcher_stale=true" >> "$GITHUB_OUTPUT"
             exit 1
           }
 
@@ -32,12 +32,14 @@ jobs:
           # Check 1: Fetcher hasn't run in 2+ hours
           if [ -z "$LAST_SYNC" ]; then
             ALERTS="Fetcher has never run!"
+            echo "fetcher_stale=true" >> "$GITHUB_OUTPUT"
           else
             FETCH_AGE_S=$(( $(date -u +%s) - $(date -u -d "$LAST_SYNC" +%s) ))
             FETCH_AGE_H=$(( FETCH_AGE_S / 3600 ))
             echo "Fetch age: ${FETCH_AGE_H}h"
             if [ "$FETCH_AGE_H" -ge 2 ]; then
               ALERTS="Fetcher hasn't run in ${FETCH_AGE_H}h (last: $LAST_SYNC)"
+              echo "fetcher_stale=true" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -73,6 +75,20 @@ jobs:
           else
             echo "All checks passed ✓"
           fi
+
+      - name: Restart fetcher if stale
+        if: failure() && steps.stats.outputs.fetcher_stale == 'true'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          API="https://api.machines.dev/v1/apps/psp-fetcher/machines"
+
+          MACHINE_ID=$(curl -sf -H "Authorization: Bearer $FLY_API_TOKEN" "$API" | jq -r '.[0].id')
+          echo "Restarting machine $MACHINE_ID..."
+
+          curl -sf -X POST -H "Authorization: Bearer $FLY_API_TOKEN" "$API/$MACHINE_ID/restart" \
+            && echo "Restart successful" \
+            || echo "::warning::Restart failed"
 
       # TODO: Uncomment when Twilio is set up (needs TWILIO_ACCOUNT_SID,
       #       TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, TWILIO_TO_NUMBER secrets)
