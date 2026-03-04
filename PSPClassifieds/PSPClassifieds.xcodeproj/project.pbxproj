@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0C50123D2F39035100C51E50 /* SimilarItemsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */; };
 		0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */; };
+		0C5012502F5747A000C51E50 /* HTMLTextViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5012512F5747A000C51E50 /* HTMLTextViewTests.swift */; };
 		0C5012422F391FA700C51E50 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5012412F391FA700C51E50 /* NotificationManager.swift */; };
 		0CD3F5502F4A6C02004B08A3 /* DeviceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD3F54F2F4A6C02004B08A3 /* DeviceSettings.swift */; };
 		0CD3F5522F4A6C2C004B08A3 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD3F5512F4A6C2C004B08A3 /* NotificationsView.swift */; };
@@ -60,6 +61,7 @@
 		0C50123C2F39035100C51E50 /* SimilarItemsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarItemsSection.swift; sourceTree = "<group>"; };
 		0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarSearchQueryTests.swift; sourceTree = "<group>"; };
 		0C5012402F391B7500C51E50 /* PSPClassifieds.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PSPClassifieds.entitlements; sourceTree = "<group>"; };
+		0C5012512F5747A000C51E50 /* HTMLTextViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLTextViewTests.swift; sourceTree = "<group>"; };
 		0C5012412F391FA700C51E50 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		0CD3F54F2F4A6C02004B08A3 /* DeviceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSettings.swift; sourceTree = "<group>"; };
 		0CD3F5512F4A6C2C004B08A3 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 			children = (
 				E10000000000000000000010 /* PostTests.swift */,
 				0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */,
+				0C5012512F5747A000C51E50 /* HTMLTextViewTests.swift */,
 			);
 			path = PSPClassifiedsTests;
 			sourceTree = "<group>";
@@ -387,6 +390,7 @@
 			files = (
 				0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */,
 				E10000000000000000000001 /* PostTests.swift in Sources */,
+				0C5012502F5747A000C51E50 /* HTMLTextViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
