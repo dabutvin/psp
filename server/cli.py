@@ -75,6 +75,25 @@ def cmd_migrate_search(args):
     print(f"Done! Updated {count:,} messages.")
 
 
+def cmd_rebuild_search(args):
+    """Rebuild all search vectors (e.g. after changing tokenization logic)."""
+    import logging
+    from core.logging import setup_logging
+    from core.migrations import rebuild_search_vectors
+
+    setup_logging(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        json_format=args.json,
+    )
+
+    print(f"Rebuilding ALL search vectors (batch_size={args.batch}, delay={args.delay}s)...")
+    count = rebuild_search_vectors(
+        batch_size=args.batch,
+        delay=args.delay,
+    )
+    print(f"Done! Rebuilt {count:,} messages.")
+
+
 def cmd_test_api(args):
     """Test API connectivity."""
     from sync.client import test_connection
@@ -381,6 +400,26 @@ def main():
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
     migrate_parser.set_defaults(func=cmd_migrate_search)
+
+    # rebuild-search command
+    rebuild_parser = subparsers.add_parser(
+        "rebuild-search",
+        help="Rebuild all search vectors",
+        description="Recompute search_vector for ALL messages. Use after changing tokenization logic.",
+    )
+    rebuild_parser.add_argument(
+        "--batch", type=int, default=1000, help="Messages per batch (default: 1000)"
+    )
+    rebuild_parser.add_argument(
+        "--delay", type=float, default=0.1, help="Seconds between batches (default: 0.1)"
+    )
+    rebuild_parser.add_argument(
+        "--json", action="store_true", help="Output logs as JSON"
+    )
+    rebuild_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+    rebuild_parser.set_defaults(func=cmd_rebuild_search)
 
     # fetch command
     fetch_parser = subparsers.add_parser(

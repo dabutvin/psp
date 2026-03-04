@@ -105,9 +105,12 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS search_vector tsvector;
 CREATE INDEX IF NOT EXISTS idx_messages_search ON messages USING GIN(search_vector);
 
 -- Trigger function to keep search_vector updated
+-- replace() on '/' so "sublet/short" tokenizes as two separate words.
 CREATE OR REPLACE FUNCTION messages_search_trigger() RETURNS trigger AS $$
 BEGIN
-    NEW.search_vector := to_tsvector('english', coalesce(NEW.subject, '') || ' ' || coalesce(NEW.body, ''));
+    NEW.search_vector := to_tsvector('english',
+        replace(coalesce(NEW.subject, '') || ' ' || coalesce(NEW.body, ''), '/', ' ')
+    );
     RETURN NEW;
 END
 $$ LANGUAGE plpgsql;
