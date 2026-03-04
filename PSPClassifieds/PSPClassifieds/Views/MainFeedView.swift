@@ -102,6 +102,12 @@ struct MainFeedView: View {
         .task {
             await viewModel.loadInitialPosts()
         }
+        .onChange(of: postFromNotification) { _, post in
+            guard post != nil else { return }
+            Task {
+                await viewModel.refresh()
+            }
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {
             case .background:
