@@ -59,10 +59,7 @@ def migrate_search_vectors(batch_size: int = 1000, delay: float = 0.1) -> int:
                         LIMIT %s
                     )
                     UPDATE messages m
-                    SET search_vector = to_tsvector(
-                        'english',
-                        coalesce(m.subject, '') || ' ' || coalesce(m.body, '')
-                    )
+                    SET subject = m.subject
                     FROM batch
                     WHERE m.id = batch.id
                     RETURNING m.id
@@ -87,6 +84,79 @@ def migrate_search_vectors(batch_size: int = 1000, delay: float = 0.1) -> int:
 
     logger.info(
         f"Search vector migration complete: {total_updated:,} messages updated",
+        extra={"total_updated": total_updated},
+    )
+    return total_updated
+
+
+def rebuild_search_vectors(batch_size: int = 1000, delay: float = 0.1) -> int:
+    """
+    Rebuild ALL search vectors (not just missing ones).
+    
+    Use this after changing the search normalization logic to ensure
+    all existing messages get the updated tokenization.
+    
+    Args:
+        batch_size: Number of messages to update per batch
+        delay: Seconds to wait between batches
+    
+    Returns:
+        Number of messages updated
+    """
+    db_url = get_db_url()
+    total_updated = 0
+
+    with psycopg2.connect(db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM messages")
+            total = cur.fetchone()[0]
+
+            if total == 0:
+                logger.info("No messages to rebuild")
+                return 0
+
+            logger.info(
+                f"Rebuilding search vectors for {total:,} messages",
+                extra={"total": total, "batch_size": batch_size},
+            )
+
+            last_id = 0
+            while True:
+                cur.execute("""
+                    WITH batch AS (
+                        SELECT id FROM messages
+                        WHERE id > %s
+                        ORDER BY id
+                        LIMIT %s
+                    )
+                    UPDATE messages m
+                    SET subject = m.subject
+                    FROM batch
+                    WHERE m.id = batch.id
+                    RETURNING m.id
+                """, (last_id, batch_size))
+
+                rows = cur.fetchall()
+                updated = len(rows)
+                conn.commit()
+
+                if updated == 0:
+                    break
+
+                last_id = max(row[0] for row in rows)
+                total_updated += updated
+                progress = (total_updated / total) * 100
+
+                logger.info(
+                    f"Rebuilt {total_updated:,}/{total:,} ({progress:.1f}%)",
+                    extra={"updated": total_updated, "total": total, "progress": progress},
+                )
+
+                if delay > 0:
+                    time.sleep(delay)
+
+    logger.info(
+        f"Search vector rebuild complete: {total_updated:,} messages updated",
         extra={"total_updated": total_updated},
     )
     return total_updated
