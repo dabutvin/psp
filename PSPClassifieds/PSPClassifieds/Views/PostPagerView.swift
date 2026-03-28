@@ -27,21 +27,31 @@ struct PostPagerView: View {
         viewModel.posts
     }
     
+    /// Posts shown in the pager. Ensure the initial post is always present so
+    /// selection, title, and body all reference the same model instance.
+    private var pagerPosts: [Post] {
+        if posts.contains(where: { $0.id == initialPost.id }) {
+            return posts
+        }
+        return [initialPost] + posts
+    }
+    
     private var currentPost: Post {
-        posts.first { $0.id == selectedPostId } ?? initialPost
+        pagerPosts.first { $0.id == selectedPostId } ?? initialPost
     }
     
     private var currentIndex: Int {
-        posts.firstIndex { $0.id == selectedPostId } ?? 0
+        posts.firstIndex { $0.id == selectedPostId } ?? -1
     }
     
     private var shouldLoadMore: Bool {
-        currentIndex >= posts.count - 3
+        guard currentIndex >= 0 else { return false }
+        return currentIndex >= posts.count - 3
     }
     
     var body: some View {
         TabView(selection: $selectedPostId) {
-            ForEach(posts) { post in
+            ForEach(pagerPosts) { post in
                 PostDetailContent(
                     post: post,
                     selectedSimilarPost: $selectedSimilarPost,
