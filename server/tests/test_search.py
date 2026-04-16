@@ -230,6 +230,35 @@ class TestGetDevicesMatchingPost:
         query = mock_db.fetch.call_args[0][0]
         assert "plainto_tsquery('english'" in query
 
+    @pytest.mark.asyncio
+    async def test_query_excludes_iso_posts_from_keyword_matches(self, mock_db):
+        """Keyword-match branch should exclude ISO posts via hashtags table."""
+        mock_db.fetch.return_value = []
+        
+        await get_devices_matching_post(mock_db, 123)
+        
+        query = mock_db.fetch.call_args[0][0]
+        assert "NOT EXISTS" in query
+        assert "'iso'" in query.lower()
+        assert "hashtags" in query
+
+    @pytest.mark.asyncio
+    async def test_query_does_not_exclude_iso_from_notify_all(self, mock_db):
+        """notify_all branch should NOT have the ISO exclusion."""
+        mock_db.fetch.return_value = []
+        
+        await get_devices_matching_post(mock_db, 123)
+        
+        query = mock_db.fetch.call_args[0][0]
+        # The notify_all = TRUE branch should be a simple condition
+        # without ISO exclusion -- it appears before the keyword-match branch
+        notify_all_idx = query.index("notify_all = TRUE")
+        search_filters_idx = query.index("search_filters IS NOT NULL")
+        not_exists_idx = query.index("NOT EXISTS")
+        # ISO exclusion should be inside the search_filters branch, not the notify_all branch
+        assert not_exists_idx > search_filters_idx
+        assert notify_all_idx < search_filters_idx
+
 
 class TestRemoveDeviceToken:
     """Tests for remove_device_token async function."""
