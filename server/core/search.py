@@ -97,8 +97,14 @@ async def get_devices_matching_post(db: "Database", post_id: int) -> list[dict]:
     
     Notification logic:
     - If enabled = FALSE → no notification
+    - If the post is an ISO (In Search Of) post → no keyword-match notification
     - If enabled = TRUE AND notify_all = TRUE → notify
     - If enabled = TRUE AND notify_all = FALSE → notify only if post matches any search term
+    
+    ISO posts are excluded from keyword-match notifications because they represent
+    someone *looking for* an item, not offering one. Users with keyword alerts like
+    "high chair" want to see items for sale, not other people also searching.
+    notify_all devices still receive ISO posts.
     
     Args:
         db: Database connection (core.database.Database instance)
@@ -112,10 +118,10 @@ async def get_devices_matching_post(db: "Database", post_id: int) -> list[dict]:
         FROM device_tokens d
         WHERE d.enabled = TRUE
         AND (
-            -- Notify all posts
+            -- Notify all posts (including ISO)
             d.notify_all = TRUE
             OR
-            -- Or has search filters and at least one matches
+            -- Or has search filters, at least one matches, and post is NOT an ISO
             (
                 d.search_filters IS NOT NULL 
                 AND array_length(d.search_filters, 1) > 0
@@ -123,6 +129,11 @@ async def get_devices_matching_post(db: "Database", post_id: int) -> list[dict]:
                     SELECT 1 FROM messages m, unnest(d.search_filters) AS filter_term
                     WHERE m.id = $1
                     AND m.search_vector @@ plainto_tsquery('english', filter_term)
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM hashtags h
+                    WHERE h.message_id = $1
+                    AND LOWER(h.name) = 'iso'
                 )
             )
         )
