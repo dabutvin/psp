@@ -134,6 +134,10 @@ struct PostDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                PostShareLink(post: post)
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     withAnimation(.spring(response: 0.3)) {
                         savedPostsManager.toggleSaved(post)
@@ -504,6 +508,9 @@ struct ActionButtons: View {
                     .foregroundStyle(isSaved ? .white : .primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            
+            // Share Button - system share sheet (Messages, Mail, etc.)
+            PostShareLink(post: post, style: .actionButton)
         }
         .sensoryFeedback(.impact(flexibility: .soft), trigger: isSaved)
     }

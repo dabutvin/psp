@@ -209,11 +209,34 @@ server/
 ├── routers/            # API route handlers
 │   ├── messages.py     # /api/v1/messages
 │   ├── hashtags.py     # /api/v1/hashtags
+│   ├── links.py        # Universal links: /.well-known/... and /p/{id}
 │   └── stats.py        # /api/v1/stats
 └── tests/              # Unit tests
     ├── conftest.py     # Pytest fixtures and mock database
     └── test_messages_hashtag_filter.py
 ```
+
+## Shared Post Links
+
+When someone shares a post from the iOS app, the link points here rather than at
+groups.io, so that tapping it opens the app.
+
+| Route | Purpose |
+|-------|---------|
+| `GET /.well-known/apple-app-site-association` | Tells iOS this domain may open the app for `/p/*`. Must stay at the domain root, be served as JSON, and never redirect. |
+| `GET /apple-app-site-association` | Same file, for iOS 12 and earlier |
+| `GET /p/{message_id}` | Static placeholder. Recipients with the app never load it. |
+
+**No post content is published to the web.** The `/p/{id}` route takes no
+database trip and returns the same page for every id, so a link is a dead end for
+anyone without the app — it can't be used to read or enumerate classifieds. The
+post id in the URL is only meaningful to the app.
+
+The app ID in the association file defaults to the shipping app
+(`K25Q76L89U.com.psp.classifieds`) and can be overridden with `IOS_TEAM_ID` and
+`IOS_BUNDLE_ID`. On the app side, `psp-api.fly.dev` has to be listed in the
+Associated Domains entitlement, and the App ID needs the Associated Domains
+capability enabled in the Apple Developer portal.
 
 ## Environment Variables
 
@@ -223,4 +246,6 @@ server/
 | `GROUPS_IO_GROUP_ID` | Group ID for PSP Classifieds | 8407 |
 | `DATABASE_URL` | PostgreSQL connection string | Required |
 | `BACKFILL_DELAY_SECONDS` | Delay between backfill requests | 5 |
+| `IOS_TEAM_ID` | Apple team ID for the universal link association file | K25Q76L89U |
+| `IOS_BUNDLE_ID` | iOS bundle ID for the universal link association file | com.psp.classifieds |
 

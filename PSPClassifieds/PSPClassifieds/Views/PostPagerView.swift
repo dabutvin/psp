@@ -88,6 +88,10 @@ struct PostPagerView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                PostShareLink(post: currentPost)
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     withAnimation(.spring(response: 0.3)) {
                         savedPostsManager.toggleSaved(currentPost)
@@ -169,6 +173,10 @@ struct StaticPostPagerView: View {
             }
         }
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                PostShareLink(post: currentPost)
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     withAnimation(.spring(response: 0.3)) {

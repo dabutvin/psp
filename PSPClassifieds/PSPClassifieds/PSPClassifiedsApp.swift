@@ -80,12 +80,15 @@ struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var notificationManager: NotificationManager
     @State private var selectedTab = 0
-    @State private var postFromNotification: Post?
+    @State private var postToOpen: Post?
+    /// A shared link can land on the login screen, so hold the post until the
+    /// user is through it.
+    @State private var postIdAwaitingLogin: Int?
     
     var body: some View {
         Group {
             if authManager.isAuthenticated {
-                MainTabView(selectedTab: $selectedTab, postFromNotification: $postFromNotification)
+                MainTabView(selectedTab: $selectedTab, postToOpen: $postToOpen)
             } else {
                 LoginView()
             }
@@ -99,26 +102,47 @@ struct ContentView: View {
                 await notificationManager.requestAuthorization()
             }
         }
+        .onOpenURL { url in
+            // Universal link from a shared post
+            guard let postId = PostLink.postId(from: url) else { return }
+            open(postId: postId)
+        }
         .onChange(of: authManager.isAuthenticated) { _, isAuthenticated in
             if isAuthenticated {
                 Task {
                     await notificationManager.requestAuthorization()
                 }
+                
+                if let postId = postIdAwaitingLogin {
+                    open(postId: postId)
+                }
             } else {
                 // Reset navigation state on logout
                 selectedTab = 0
-                postFromNotification = nil
+                postToOpen = nil
+                postIdAwaitingLogin = nil
             }
         }
         .onChange(of: notificationManager.pendingPostId) { _, postId in
             guard let postId = postId else { return }
             notificationManager.pendingPostId = nil
-            
-            Task { @MainActor in
-                if let post = try? await APIClient.shared.getPost(id: postId) {
-                    selectedTab = 0
-                    postFromNotification = post
-                }
+            open(postId: postId)
+        }
+    }
+    
+    /// Load a post by id and hand it to the feed, which navigates to its detail.
+    private func open(postId: Int) {
+        guard authManager.isAuthenticated else {
+            postIdAwaitingLogin = postId
+            return
+        }
+        
+        postIdAwaitingLogin = nil
+        
+        Task { @MainActor in
+            if let post = try? await APIClient.shared.getPost(id: postId) {
+                selectedTab = 0
+                postToOpen = post
             }
         }
     }

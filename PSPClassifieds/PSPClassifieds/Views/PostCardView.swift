@@ -39,6 +39,17 @@ struct PostCardView: View {
         .padding(12)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .contextMenu {
+            PostShareLink(post: post, style: .menuItem)
+            
+            if let url = post.shareContent.url {
+                Button {
+                    UIPasteboard.general.string = url.absoluteString
+                } label: {
+                    Label("Copy Link", systemImage: "link")
+                }
+            }
+        }
     }
 }
 
