@@ -15,7 +15,7 @@ Native SwiftUI app for browsing Park Slope Parents classifieds.
 - **Full-Text Search** — search across post titles and bodies
 - **Post Detail** — full message view with image gallery, sender info, email action, and save/bookmark
 - **Sharing** — send a post to an iMessage thread (or any share destination) from the detail view's toolbar, its Share button, or a long press on a feed card
-- **Deep Links** — shared links open straight to the post in the app via universal links
+- **Deep Links** — shared links open straight to the post in the app via universal links, and go nowhere without it
 - **Saved Posts** — bookmark posts locally with SwiftData persistence
 - **Background Refresh** — uses `BGAppRefreshTask` to keep the feed up to date
 - **Authenticated Images** — loads photos from groups.io via shared WKWebView cookies
@@ -48,8 +48,8 @@ The API itself requires no auth. However, post images are hosted on `groups.park
 Sharing a post produces a `https://psp-api.fly.dev/p/{post_id}` link. The backend
 serves an [app-site-association file](../server/README.md#shared-post-links) for
 `/p/*`, which makes these universal links: iOS opens the app when the recipient
-has it installed, and falls back to a web page linking to groups.io when they
-don't.
+has it installed. Recipients without the app get a placeholder page — post
+content is never published to the web.
 
 1. `PostLink` builds and parses those URLs (`Extensions/Post+Sharing.swift`)
 2. `ContentView.onOpenURL` pulls the post id out of an incoming link, fetches the post, and hands it to the feed to navigate to

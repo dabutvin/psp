@@ -3,8 +3,7 @@ Tests for the deep link endpoints.
 
 Verifies:
 1. The association file iOS fetches is valid JSON with the app ID and path
-2. Shared post links render a page with the post details and Open Graph tags
-3. Unknown or malformed post ids fail gracefully
+2. Shared post links publish nothing about the post
 """
 
 
@@ -33,7 +32,7 @@ class TestAppSiteAssociation:
         assert legacy.json() == well_known.json()
 
 
-class TestSharedPostPage:
+class TestSharedPostLink:
     """Tests for GET /p/{message_id}."""
 
     def test_returns_html(self, client):
@@ -42,61 +41,29 @@ class TestSharedPostPage:
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/html")
 
-    def test_includes_post_details(self, client):
+    def test_publishes_no_post_content(self, client, sample_messages):
+        """Classifieds data must never reach the web."""
+        message = sample_messages[0]
+        response = client.get(f"/p/{message['id']}")
+
+        assert message["subject"] not in response.text
+        assert message["snippet"] not in response.text
+        assert message["body"] not in response.text
+        assert message["name"] not in response.text
+        assert "groups.parkslopeparents.com" not in response.text
+
+    def test_identical_for_every_id(self, client):
+        """The page reveals nothing, including whether a post exists."""
+        known = client.get("/p/1001")
+        unknown = client.get("/p/999999")
+
+        assert unknown.status_code == known.status_code
+        assert unknown.text == known.text
+
+    def test_asks_search_engines_not_to_index(self, client):
         response = client.get("/p/1001")
 
-        assert "For Sale: Vintage Chair" in response.text
-        assert "Alice Smith" in response.text
-        assert "$50" in response.text
-
-    def test_includes_open_graph_tags(self, client):
-        """Link previews in iMessage and Slack read these."""
-        response = client.get("/p/1001")
-
-        assert 'property="og:title"' in response.text
-        assert 'property="og:description"' in response.text
-
-    def test_preview_title_does_not_repeat_price(self, client):
-        """The sample subject already ends in $50."""
-        response = client.get("/p/1001")
-
-        assert '<meta property="og:title" content="For Sale: Vintage Chair $50">' in response.text
-
-    def test_preview_title_adds_missing_price(self, client, mock_db):
-        mock_db.messages[0]["subject"] = "For Sale: Vintage Chair"
-        mock_db.messages[0]["body"] = "Asking $50, pick up in Park Slope."
-
-        response = client.get("/p/1001")
-
-        assert '<meta property="og:title" content="For Sale: Vintage Chair - Asking $50">' in response.text
-
-    def test_links_to_groups_io(self, client):
-        """The fallback for recipients without the app."""
-        response = client.get("/p/1001")
-
-        assert "https://groups.parkslopeparents.com/g/Classifieds/message/1" in response.text
-
-    def test_strips_markup_from_post_content(self, client, mock_db):
-        """Subjects come from email, so they must not be able to inject markup."""
-        mock_db.messages[0]["subject"] = 'FS: <script>alert("x")</script> chair'
-
-        response = client.get("/p/1001")
-
-        assert "<script>" not in response.text
-
-    def test_escapes_special_characters(self, client, mock_db):
-        mock_db.messages[0]["subject"] = 'FS: "Chair" & table'
-
-        response = client.get("/p/1001")
-
-        assert "&quot;Chair&quot; &amp; table" in response.text
-
-    def test_unknown_post_returns_404_page(self, client):
-        response = client.get("/p/999999")
-
-        assert response.status_code == 404
-        assert response.headers["content-type"].startswith("text/html")
-        assert "Post not found" in response.text
+        assert response.headers["X-Robots-Tag"] == "noindex, nofollow"
 
     def test_non_numeric_post_id_returns_422(self, client):
         response = client.get("/p/not-a-number")

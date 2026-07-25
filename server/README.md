@@ -225,11 +225,12 @@ groups.io, so that tapping it opens the app.
 |-------|---------|
 | `GET /.well-known/apple-app-site-association` | Tells iOS this domain may open the app for `/p/*`. Must stay at the domain root, be served as JSON, and never redirect. |
 | `GET /apple-app-site-association` | Same file, for iOS 12 and earlier |
-| `GET /p/{message_id}` | Web page for a shared post: title, price, sender, and a link to the message on groups.io |
+| `GET /p/{message_id}` | Static placeholder. Recipients with the app never load it. |
 
-iOS hands `/p/{id}` links straight to the app when the recipient has it
-installed, so they only ever see the web page when they don't. Link previews in
-iMessage and Slack read the Open Graph tags on that page.
+**No post content is published to the web.** The `/p/{id}` route takes no
+database trip and returns the same page for every id, so a link is a dead end for
+anyone without the app — it can't be used to read or enumerate classifieds. The
+post id in the URL is only meaningful to the app.
 
 The app ID in the association file defaults to the shipping app
 (`K25Q76L89U.com.psp.classifieds`) and can be overridden with `IOS_TEAM_ID` and
