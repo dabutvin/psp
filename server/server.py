@@ -77,12 +77,16 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # Import and include routers
-from routers import devices, hashtags, messages, stats
+from routers import devices, hashtags, links, messages, stats
 
 app.include_router(messages.router, prefix="/api/v1", tags=["messages"])
 app.include_router(hashtags.router, prefix="/api/v1", tags=["hashtags"])
 app.include_router(stats.router, prefix="/api/v1", tags=["stats"])
 app.include_router(devices.router, prefix="/api/v1", tags=["devices"])
+
+# Deep links are served from the domain root: iOS requires the association file
+# at /.well-known, and shared links stay short
+app.include_router(links.router, tags=["links"])
 
 
 @app.get("/", include_in_schema=False)

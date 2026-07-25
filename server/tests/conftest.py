@@ -178,8 +178,14 @@ class MockDatabase:
     
     def _filter_messages(self, query: str, args: tuple) -> list[MockRecord]:
         """Filter messages based on query parameters."""
+        import re
+        
         results = list(self.messages)
         query_lower = query.lower()
+        
+        # Lookup by primary key (single message / shared link page)
+        if re.search(r"where\s+(m\.)?id\s*=\s*\$1", query_lower) and args:
+            return [m for m in results if m["id"] == args[0]]
         
         # Check for hashtag join - means we need to filter by hashtag
         if "join hashtags" in query_lower:

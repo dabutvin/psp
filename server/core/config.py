@@ -62,3 +62,15 @@ def get_api_token() -> str:
 def get_group_id() -> int:
     """Get Groups.io group ID."""
     return get_settings().groups_io_group_id
+
+
+def get_ios_app_id() -> str:
+    """
+    Apple app ID (team identifier + bundle identifier) for universal links.
+
+    Read from the environment rather than Settings so that serving the
+    association file never depends on database or groups.io credentials.
+    """
+    team_id = os.getenv("IOS_TEAM_ID", "K25Q76L89U")
+    bundle_id = os.getenv("IOS_BUNDLE_ID", "com.psp.classifieds")
+    return f"{team_id}.{bundle_id}"
