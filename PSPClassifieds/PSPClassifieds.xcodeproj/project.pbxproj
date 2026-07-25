@@ -44,7 +44,10 @@
 		A100000129999999000000B0 /* PostPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000B1 /* PostPagerView.swift */; };
 		A100000129999999000000C0 /* FeedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000C1 /* FeedCache.swift */; };
 		A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000D1 /* BackgroundFetchManager.swift */; };
+		A100000129999999000000E0 /* Post+Sharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000E1 /* Post+Sharing.swift */; };
+		A100000129999999000000E2 /* PostShareLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000129999999000000E3 /* PostShareLink.swift */; };
 		E10000000000000000000001 /* PostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000010 /* PostTests.swift */; };
+		E10000000000000000000012 /* PostSharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000011 /* PostSharingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,8 +101,11 @@
 		A100000129999999000000C1 /* FeedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedCache.swift; sourceTree = "<group>"; };
 		A100000129999999000000D1 /* BackgroundFetchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFetchManager.swift; sourceTree = "<group>"; };
 		A100000129999999000000D2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A100000129999999000000E1 /* Post+Sharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Post+Sharing.swift"; sourceTree = "<group>"; };
+		A100000129999999000000E3 /* PostShareLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostShareLink.swift; sourceTree = "<group>"; };
 		E10000000000000000000002 /* PSPClassifiedsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PSPClassifiedsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000000000000000000010 /* PostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTests.swift; sourceTree = "<group>"; };
+		E10000000000000000000011 /* PostSharingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostSharingTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -217,6 +223,7 @@
 				A10000012999999900000028 /* SkeletonLoader.swift */,
 				A10000012999999900000091 /* AuthenticatedImage.swift */,
 				A10000012999999900000093 /* ZoomableImageViewer.swift */,
+				A100000129999999000000E3 /* PostShareLink.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -242,6 +249,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000012999999900000092 /* String+HTMLDecoding.swift */,
+				A100000129999999000000E1 /* Post+Sharing.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -250,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				E10000000000000000000010 /* PostTests.swift */,
+				E10000000000000000000011 /* PostSharingTests.swift */,
 				0C50123E2F39036E00C51E50 /* SimilarSearchQueryTests.swift */,
 				0C5012512F5747A000C51E50 /* HTMLTextViewTests.swift */,
 			);
@@ -381,6 +390,8 @@
 				A100000129999999000000B0 /* PostPagerView.swift in Sources */,
 				A100000129999999000000C0 /* FeedCache.swift in Sources */,
 				A100000129999999000000D0 /* BackgroundFetchManager.swift in Sources */,
+				A100000129999999000000E0 /* Post+Sharing.swift in Sources */,
+				A100000129999999000000E2 /* PostShareLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -390,6 +401,7 @@
 			files = (
 				0C50123F2F39036E00C51E50 /* SimilarSearchQueryTests.swift in Sources */,
 				E10000000000000000000001 /* PostTests.swift in Sources */,
+				E10000000000000000000012 /* PostSharingTests.swift in Sources */,
 				0C5012502F5747A000C51E50 /* HTMLTextViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

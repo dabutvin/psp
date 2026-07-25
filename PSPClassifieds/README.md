@@ -14,6 +14,7 @@ Native SwiftUI app for browsing Park Slope Parents classifieds.
 - **Hashtag Filtering** — tap any hashtag pill to filter, or use the filter sheet to combine multiple hashtags and date ranges
 - **Full-Text Search** — search across post titles and bodies
 - **Post Detail** — full message view with image gallery, sender info, email action, and save/bookmark
+- **Sharing** — send a post to an iMessage thread (or any share destination) from the detail view's toolbar, its Share button, or a long press on a feed card
 - **Saved Posts** — bookmark posts locally with SwiftData persistence
 - **Background Refresh** — uses `BGAppRefreshTask` to keep the feed up to date
 - **Authenticated Images** — loads photos from groups.io via shared WKWebView cookies
@@ -78,8 +79,10 @@ PSPClassifieds/
 ├── Components/
 │   ├── AuthenticatedImage.swift     # Cookie-aware image view
 │   ├── HashtagPill.swift            # Colored hashtag badge
+│   ├── PostShareLink.swift          # Share sheet entry point for a post
 │   └── SkeletonLoader.swift         # Loading placeholder
 ├── Extensions/
+│   ├── Post+Sharing.swift           # Share text and link for a post
 │   └── String+HTMLDecoding.swift    # HTML entity decoding
 └── Resources/
     └── Assets.xcassets
