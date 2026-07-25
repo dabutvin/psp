@@ -42,7 +42,7 @@ struct PostCardView: View {
         .contextMenu {
             PostShareLink(post: post, style: .menuItem)
             
-            if let url = post.webURL {
+            if let url = post.shareContent.url {
                 Button {
                     UIPasteboard.general.string = url.absoluteString
                 } label: {

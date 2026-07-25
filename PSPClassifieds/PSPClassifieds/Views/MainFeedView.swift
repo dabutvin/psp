@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MainFeedView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @Binding var postFromNotification: Post?
+    @Binding var postToOpen: Post?
     @State private var viewModel = FeedViewModel()
     @State private var filterViewModel = FilterViewModel()
     @State private var showSearch = false
@@ -43,7 +43,7 @@ struct MainFeedView: View {
                 }
                 
                 // Posts List
-                PostsList(viewModel: viewModel, shouldScrollToTopAndRefresh: $shouldScrollToTopOnReturn, postFromNotification: $postFromNotification)
+                PostsList(viewModel: viewModel, shouldScrollToTopAndRefresh: $shouldScrollToTopOnReturn, postToOpen: $postToOpen)
             }
             .navigationTitle("PSP Classifieds")
             .navigationBarTitleDisplayMode(.inline)
@@ -102,7 +102,7 @@ struct MainFeedView: View {
         .task {
             await viewModel.loadInitialPosts()
         }
-        .onChange(of: postFromNotification) { _, post in
+        .onChange(of: postToOpen) { _, post in
             guard post != nil else { return }
             Task {
                 await viewModel.refresh()
@@ -235,7 +235,7 @@ struct FilterChip: View {
 struct PostsList: View {
     let viewModel: FeedViewModel
     @Binding var shouldScrollToTopAndRefresh: Bool
-    @Binding var postFromNotification: Post?
+    @Binding var postToOpen: Post?
     @State private var showScrollToTop = false
     @State private var visibleIndices: Set<Int> = []
     @State private var selectedPost: Post?
@@ -348,17 +348,13 @@ struct PostsList: View {
             .navigationDestination(item: $selectedPost) { post in
                 PostPagerView(viewModel: viewModel, initialPost: post, lastViewedPostId: $lastViewedPostId)
             }
-            .onChange(of: postFromNotification) { _, post in
-                guard let post else { return }
-                postFromNotification = nil
-                if selectedPost != nil {
-                    selectedPost = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        selectedPost = post
-                    }
-                } else {
-                    selectedPost = post
-                }
+            .onChange(of: postToOpen) { _, _ in
+                openRequestedPost()
+            }
+            .onAppear {
+                // A notification or shared link can set the post before this
+                // list is on screen, so pick it up here too
+                openRequestedPost()
             }
             .onChange(of: selectedPost) { oldValue, newValue in
                 if let post = newValue {
@@ -388,6 +384,22 @@ struct PostsList: View {
                     shouldScrollToTopAndRefresh = false
                 }
             }
+        }
+    }
+    
+    /// Navigate to the post a notification or shared link asked for.
+    private func openRequestedPost() {
+        guard let post = postToOpen else { return }
+        postToOpen = nil
+        
+        if selectedPost != nil {
+            // Already in a detail view - dismiss it before pushing the new post
+            selectedPost = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                selectedPost = post
+            }
+        } else {
+            selectedPost = post
         }
     }
     
@@ -442,5 +454,5 @@ struct CaughtUpBanner: View {
 }
 
 #Preview {
-    MainFeedView(postFromNotification: .constant(nil))
+    MainFeedView(postToOpen: .constant(nil))
 }

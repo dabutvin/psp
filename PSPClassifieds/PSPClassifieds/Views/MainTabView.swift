@@ -3,11 +3,11 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(SavedPostsManager.self) private var savedPostsManager
     @Binding var selectedTab: Int
-    @Binding var postFromNotification: Post?
+    @Binding var postToOpen: Post?
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            MainFeedView(postFromNotification: $postFromNotification)
+            MainFeedView(postToOpen: $postToOpen)
                 .tabItem {
                     Label("Browse", systemImage: "list.bullet")
                 }
@@ -29,6 +29,6 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView(selectedTab: .constant(0), postFromNotification: .constant(nil))
+    MainTabView(selectedTab: .constant(0), postToOpen: .constant(nil))
         .environment(SavedPostsManager())
 }

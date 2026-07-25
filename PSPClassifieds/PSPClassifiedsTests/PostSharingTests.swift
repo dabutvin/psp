@@ -34,39 +34,60 @@ final class PostSharingTests: XCTestCase {
 
     // MARK: - URL
 
-    func testURLMatchesWebURL() {
-        let post = makePost(msgNum: 725001)
-        XCTAssertEqual(post.shareContent.url, post.webURL)
-    }
-
-    func testURLIsNilWithoutMessageNumber() {
-        XCTAssertNil(makePost(msgNum: nil).shareContent.url)
+    func testURLIsAppLink() {
+        let post = makePost(id: 4242, msgNum: 725001)
+        XCTAssertEqual(post.shareContent.url, URL(string: "https://psp-api.fly.dev/p/4242"))
     }
 
     // MARK: - Text Fallback
 
     func testTextAppendsLink() {
-        let post = makePost(subject: "FS: Stroller", price: "$40", msgNum: 725001)
+        let post = makePost(id: 4242, subject: "FS: Stroller", price: "$40")
         XCTAssertEqual(
             post.shareContent.text,
-            "FS: Stroller\n$40\nhttps://groups.parkslopeparents.com/g/Classifieds/message/725001"
+            "FS: Stroller\n$40\nhttps://psp-api.fly.dev/p/4242"
         )
     }
 
-    func testTextIsMessageOnlyWithoutLink() {
-        let post = makePost(subject: "FS: Stroller", price: "$40", msgNum: nil)
-        XCTAssertEqual(post.shareContent.text, "FS: Stroller\n$40")
+    // MARK: - Incoming Links
+
+    func testParsesPostIdFromSharedLink() {
+        let url = URL(string: "https://psp-api.fly.dev/p/4242")!
+        XCTAssertEqual(PostLink.postId(from: url), 4242)
+    }
+
+    func testParsesPostIdRoundTrip() {
+        let post = makePost(id: 725001)
+        XCTAssertEqual(PostLink.postId(from: post.shareContent.url!), post.id)
+    }
+
+    func testRejectsOtherHosts() {
+        let url = URL(string: "https://example.com/p/4242")!
+        XCTAssertNil(PostLink.postId(from: url))
+    }
+
+    func testRejectsOtherPaths() {
+        for path in ["/", "/p", "/p/4242/extra", "/api/v1/messages/4242", "/pp/4242"] {
+            let url = URL(string: "https://psp-api.fly.dev\(path)")!
+            XCTAssertNil(PostLink.postId(from: url), "Expected \(path) to be rejected")
+        }
+    }
+
+    func testRejectsNonNumericPostId() {
+        let url = URL(string: "https://psp-api.fly.dev/p/not-a-number")!
+        XCTAssertNil(PostLink.postId(from: url))
     }
 
     // MARK: - Helpers
 
     private func makePost(
+        id: Int = 1,
         subject: String? = "Test",
         price: String? = nil,
         msgNum: Int? = nil
     ) -> Post {
         Post(
-            id: 1,
+            id: id,
             topicId: nil,
             created: nil,
             subject: subject,
