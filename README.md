@@ -11,4 +11,4 @@ The backend ingests messages from groups.io on an hourly schedule, stores them i
 | Directory | Description | Details |
 |-----------|-------------|---------|
 | [`server/`](server/README.md) | Python backend — FastAPI API + groups.io fetcher | Deployed on Fly.io with Supabase Postgres |
-| [`PSPClassifieds/`](PSPClassifieds/README.md) | Native iOS app — SwiftUI | iOS 17+, Xcode project |
+| [`PSPClassifieds/`](PSPClassifieds/README.md) | Native iOS app — SwiftUI | iOS 17+, Xcode project. Every merge to `main` ships a TestFlight build |

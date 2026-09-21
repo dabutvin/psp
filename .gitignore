@@ -1,0 +1,21 @@
+# Xcode build output
+DerivedData/
+build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Code signing — never commit certificates, keys or profiles
+.signing-secrets/
+private_keys/
+*.p12
+*.mobileprovision
+*.p8
+*.cer
+*.certSigningRequest
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
